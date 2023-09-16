@@ -1,3 +1,5 @@
+#' @export
+#'
 combine_hash <- function(hash_list, n1, n2){
 
   total_counts <- Reduce(`+`, purrr::map(hash_list, ~.x$total_counts))

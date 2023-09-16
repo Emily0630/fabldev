@@ -1,3 +1,5 @@
+#' @export
+#'
 CompareRecordsBK <- function(df1,
                              df2,
                              flds=NULL,
