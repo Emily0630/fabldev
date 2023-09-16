@@ -21,9 +21,10 @@ gibbs_efficient <- function(hash, m_prior = 1, u_prior = 1,
   pattern_counts <- hash$total_counts
   P <- nrow(unique_patterns)
   counts_by_rec <- hash$pattern_counts_by_record
-  hash_to_rec1 <-hash$hash_to_file_1
+  hash_to_file_1 <-hash$hash_to_file_1
 
-  candidates_P <- 1:(P+1)
+  #candidates_P <- 1:(P+1)
+  candidates_P <- 0:P
   Z.SAMPS <- matrix(NA, nrow = n2, ncol = S)
   M.SAMPS <- matrix(NA, nrow = length(field_marker), ncol = S)
   U.SAMPS <- matrix(NA, nrow = length(field_marker), ncol = S)
@@ -79,16 +80,17 @@ gibbs_efficient <- function(hash, m_prior = 1, u_prior = 1,
 
     pi <- rbeta(1, L + alpha, n2 - L + beta)
     Z <- unname(sapply(hash_weights, function(x){
-      sample(candidates_P, 1, prob = c(x * pi / n1, 1 - pi))
+      sample(candidates_P, 1, prob = c(1 - pi, x * pi / n1))
     }))
-    L <- sum(Z < P + 1)
-    hash_matches <- factor(Z, levels = 1:(P+1))
+    #L <- sum(Z < P + 1)
+    L <- sum(Z > 0)
+    hash_matches <- factor(Z, levels = 0:P)
     df <- data.frame(hash_matches)
     matches <- df %>%
       group_by(hash_matches, .drop = F) %>%
       count() %>%
-      pull() %>%
-      .[-(P+1)]
+      filter(hash_matches != 0) %>%
+      pull()
 
     Z.SAMPS[,s] <- Z
     M.SAMPS[,s] <- m
@@ -110,8 +112,15 @@ gibbs_efficient <- function(hash, m_prior = 1, u_prior = 1,
   # U.SAMPS <- U.SAMPS[,-(1:burn)]
 
   final_gibbs <- apply(Z.SAMPS, 2, function(z){
-    unlist(purrr::imap(z, ~sample_with_1(hash_to_rec1[[.y]][[.x]], 1)))
+    purrr::imap(z, ~ if(.x == 0) {
+      return(0)
+      } else {
+      sample_with_1(hash_to_file_1[[.y]][[.x]], 1)
+      }) %>%
+      unlist()
   })
+
+  final_gibbs[final_gibbs == 0] <- n1 + 1
 
   list(Z = final_gibbs,
        m = M.SAMPS,

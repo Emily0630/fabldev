@@ -21,12 +21,16 @@ simulate_comparisons <- function(m, u, levels, n1, n2, overlap){
     sample(seq_along(x) - 1, overlap, replace = T, x)
   })
 
-  indicators[match_index,] <- gamma_match
-
   gamma_nonmatch <- sapply(u_list, function(x){
     sample(seq_along(x) - 1, N - overlap, replace = T, x)
   })
+
+  if(overlap == 0){
+    indicators <- gamma_nonmatch
+  } else {
+  indicators[match_index,] <- gamma_match
   indicators[-match_index,] <- gamma_nonmatch
+  }
   Sadinle_indicators <- purrr::map2(data.frame(indicators), levels, ~fs_to_sadinle_2(.x, .y)) %>%
     do.call(cbind, .)
 
@@ -82,15 +86,19 @@ simulate_comparisons_mm <- function(m, u, levels, n1, n2, overlap){
   u_list <- split(u, field_marker)
 
   gamma_match <- sapply(m_list, function(x){
-    sample(seq_along(x) - 1, sum(overlap), replace = T, x)
+    sample(seq_along(x) - 1, overlap, replace = T, x)
   })
-
-  indicators[match_index, ] <- gamma_match
 
   gamma_nonmatch <- sapply(u_list, function(x){
-    sample(seq_along(x) - 1, N - sum(overlap), replace = T, x)
+    sample(seq_along(x) - 1, N - overlap, replace = T, x)
   })
-  indicators[-match_index,] <- gamma_nonmatch
+
+  if(overlap == 0){
+    indicators <- gamma_nonmatch
+  } else {
+    indicators[match_index,] <- gamma_match
+    indicators[-match_index,] <- gamma_nonmatch
+  }
   Sadinle_indicators <- purrr::map2(data.frame(indicators), levels, ~fs_to_sadinle_2(.x, .y)) %>%
     do.call(cbind, .)
 

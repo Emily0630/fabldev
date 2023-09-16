@@ -1,0 +1,108 @@
+---
+title: "base_demo"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{base_demo}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(fabldev)
+library(glue)
+```
+
+
+```{r}
+# k = as.integer(Sys.getenv("SLURM_ARRAY_TASK_ID"))
+# n1_seq <- seq(5000, by = 5000, length.out = 20)
+# n1 <- n1_seq[k]
+# n2 <- n1
+
+n1 <- n2 <- 50
+total_overlap <- n2/2
+S = 50
+burn = S * .1
+
+Z_true <- rep(0, n2)
+Z_true[1:total_overlap] <- 1:total_overlap
+
+show_progress <- T
+fast = F
+R <- NULL
+all_patterns <- T
+
+m <- c(.05, .95, .05, .95, .05, .95, .05, .95, .05, .95)
+
+u <- c(.99, .01, .99, .01, 
+       1 - 1/30, 1/30, 1 - 1/12, 1/12, 1 - 1/15, 1/15)
+
+levels <- c(2, 2, 2, 2, 2)
+
+possible_batches <- 1:200
+pair_limit = 100000000
+pair_limit = 1000
+
+batches <- (n1 * n2 / possible_batches < pair_limit) %>% 
+  which(. == T) %>% 
+  .[1] %>% 
+  possible_batches[.]
+
+normal_batch_size <- n2 %/% batches
+last_batch_size <- n2 %% batches
+if(last_batch_size == 0){
+  last_batch_size <- NULL
+}
+batch_sizes <-c(rep(normal_batch_size, batches), last_batch_size)
+
+batches_with_overlap <- total_overlap %/% normal_batch_size
+remaining_overlap <- total_overlap %% normal_batch_size
+overlap_vec <- rep(0, length(batch_sizes))
+overlap_vec[1:batches_with_overlap] <- normal_batch_size
+overlap_vec[batches_with_overlap + 1] <- remaining_overlap
+
+hash_list <- vector("list", length(batch_sizes))
+#vi_list <- vector("list", length(batch_sizes))
+
+
+for (i in seq_along(batch_sizes)){
+  cd <- simulate_comparisons(m, u, levels, n1, batch_sizes[i], overlap_vec[i])
+  hash_list[[i]] <- hash_comparisons(cd, all_patterns = T)
+  #vi_hash_list[[i]] <- vi_hash_comparisons(cd, all_patterns = T)
+  print(i)
+  gc()
+}
+
+hash <- combine_hash(hash_list = hash_list, n1, n2)
+
+ptm <- proc.time()
+out <- gibbs_efficient(hash, S=S, burn = burn)
+seconds <- (proc.time() - ptm)[3]
+result <- estimate_links(out$Z, n1)
+#eval <- evaluate_links(result$Zhat, Z_true, n1)
+fabl_df <- data.frame(n1 = n1, 
+                      time = seconds, 
+                      iterations = S,
+                      method = "fabl")
+
+ptm <- proc.time()
+out <- vi_efficient(hash)
+seconds <- (proc.time() - ptm)[3]
+result <- vi_estimate_links(out, hash, resolve = F)
+vabl_df <- data.frame(n1 = n1, 
+                      time = seconds, 
+                      iterations = out$t,
+                      method = "vabl")
+
+
+df <- rbind(fabl_df, vabl_df)
+saveRDS(df, glue("out/speed_sim_big/n_{k}"))
+
+```
