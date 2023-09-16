@@ -1,3 +1,7 @@
+#' Simulate comparison Vectors
+#'
+#' @export
+
 simulate_comparisons <- function(m, u, levels, n1, n2, overlap){
   field_marker <- unlist(lapply(1:length(levels), function(x){
     rep(x, levels[x])
