@@ -1,3 +1,5 @@
+#' @export
+#'
 gibbs_efficient <- function(hash, m_prior = 1, u_prior = 1,
                        alpha = 1, beta = 1, S = 1000, burn = 100,
                        show_progress = T){
