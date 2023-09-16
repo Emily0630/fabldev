@@ -1,3 +1,5 @@
+#' @export
+#'
 estimate_links<- function(Z_samps, n1, lFNM=1, lFM1=1, lFM2=2, lR=Inf,
                           nonmatch = "BK", matching = "single"){
   #

@@ -1,3 +1,5 @@
+#' @export
+#'
 vi_hash_comparisons <- function(comparisons,
                       method = "both",
                       all_patterns = FALSE){

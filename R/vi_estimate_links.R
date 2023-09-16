@@ -1,3 +1,5 @@
+#' @export
+#'
 vi_estimate_links <- function(out, hash, resolve = TRUE,
                                 lFNM=1, lFM1=1, lFM2=2, lR=Inf){
 

@@ -1,3 +1,5 @@
+#' @export
+#'
 vi_efficient <- function(hash, threshold = 1e-10, tmax = 200, fixed_iterations = NULL,
                            a = NULL, b = NULL, a_pi = NULL, b_pi = NULL){
 

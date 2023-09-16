@@ -1,3 +1,5 @@
+#' @export
+#'
 evaluate_links <- function(Z_hat, Z_true, n1){
   # Z_hat = Bayes Estimate of linkage structure (from BRL)
   # Z_true = True linkage structure

@@ -1,3 +1,5 @@
+#' @export
+#'
 fs_to_sadinle <- function(gamma, levels){
   unname(unlist(mapply(function(z, y){
     gamma_f <- rep(0, y)
