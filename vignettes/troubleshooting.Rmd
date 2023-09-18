@@ -1,0 +1,35 @@
+---
+title: "troubleshooting"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{troubleshooting}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(fabldev)
+```
+
+```{r}
+getwd()
+hash <- readRDS("../../vablpaper/out/big_sim_hash/n_21")
+View(hash)
+
+lookat <- sapply(hash$pattern_counts_by_record, `[`, 122)
+
+total_counts_2 <- Reduce(`+`, purrr::map(hash$pattern_counts_by_record, ~.x))
+total_counts_3 <- purrr::map(hash$pattern_counts_by_record, ~.x) %>% 
+  do.call(rbind, .) %>% 
+  colSums()
+cbind(total_counts, total_counts_2, total_counts_3) %>% 
+  View()
+```
+

@@ -2,7 +2,10 @@
 #'
 combine_hash <- function(hash_list, n1, n2){
 
-  total_counts <- Reduce(`+`, purrr::map(hash_list, ~.x$total_counts))
+  #total_counts <- Reduce(`+`, purrr::map(hash_list, ~.x$total_counts))
+  total_counts <- purrr::map(hash_list, ~.x$total_counts) %>%
+    do.call(rbind, .) %>%
+    colSums()
 
   pattern_counts_by_record <- hash_list %>%
     purrr::map(`[[`, "pattern_counts_by_record") %>%
