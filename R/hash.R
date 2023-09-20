@@ -1,19 +1,19 @@
 #' @export
 #'
-hash_comparisons <- function(comparisons,
+hash_comparisons <- function(cd,
          method = "both", R = NULL,
          all_patterns = FALSE){
 
 
-  indicators <- comparisons[[1]]
+  indicators <- cd[[1]]
   N <- dim(indicators)[1]
-  n1 <- comparisons[[2]]
-  n2 <- comparisons[[3]]
+  n1 <- cd[[2]]
+  n2 <- cd[[3]]
 
-  levels <- comparisons[[4]]
-  fields <- seq_along(comparisons[[4]])
+  levels <- cd[[4]]
+  fields <- seq_along(cd[[4]])
   field_marker <- sapply(fields, function(x){
-    rep(x, comparisons[[4]][x])
+    rep(x, cd[[4]][x])
   }) %>%
     unlist(.) %>%
     as.vector(.)
@@ -26,7 +26,7 @@ hash_comparisons <- function(comparisons,
     c(0, .) %>%
     cumsum()
 
-  hash_vals <- purrr::imap(comparisons[[4]], ~hash_field(.x, .y, Lf_vec)) %>%
+  hash_vals <- purrr::imap(cd[[4]], ~hash_field(.x, .y, Lf_vec)) %>%
     unlist()
 
   hash <- sweep(indicators, 2, hash_vals, "*") %>%
