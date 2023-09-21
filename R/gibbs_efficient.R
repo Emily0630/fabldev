@@ -16,7 +16,7 @@ gibbs_efficient <- function(hash, m_prior = 1, u_prior = 1,
   # show_progress = set to false to show simulation progress
 
   n1 <- hash$n1
-  h2 <- hash$n2
+  n2 <- hash$n2
   field_marker <- hash$field_marker
 
   unique_patterns <- hash$ohe
