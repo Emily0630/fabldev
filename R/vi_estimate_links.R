@@ -40,22 +40,22 @@ vi_estimate_links <- function(out, hash, resolve = TRUE,
 
   if(C1){# if not using reject option and conditions of Theorem 1
 
-    Zhat <- rep(0, n2)
+    Z_hat <- rep(0, n2)
     tholdLink <- lFM1/(lFM1+lFNM) +
       (lFM2-lFM1-lFNM)*(1 - probNoLink - probMaxProbOption)/(lFM1+lFNM)
-    Zhat[maxProbOptionIsLink & (probMaxProbOption > tholdLink)] <-
+    Z_hat[maxProbOptionIsLink & (probMaxProbOption > tholdLink)] <-
       maxProbOption[maxProbOptionIsLink & (probMaxProbOption > tholdLink)]
 
   }else{# if using reject option
     if(C3){# if conditions of Theorem 3 are satisfied
 
-      Zhat <- rep(-1,n2) # represents the reject option
+      Z_hat <- rep(-1,n2) # represents the reject option
       tholdLink <- 1 - lR/lFM1 + (lFM2-lFM1)*(1 - probNoLink - probMaxProbOption)/lFM1
-      Zhat[maxProbOptionIsLink & (probMaxProbOption > tholdLink) ] <-
+      Z_hat[maxProbOptionIsLink & (probMaxProbOption > tholdLink) ] <-
         maxProbOption[maxProbOptionIsLink & (probMaxProbOption > tholdLink) ]
       noLinkDec <- probNoLink > 1-lR/lFNM
-      #Zhat[noLinkDec] <- ((n1+1):(n1+n2))[noLinkDec]
-      Zhat[noLinkDec] <- 0
+      #Z_hat[noLinkDec] <- ((n1+1):(n1+n2))[noLinkDec]
+      Z_hat[noLinkDec] <- 0
 
     }else{ # Theorem 2
 
@@ -68,28 +68,28 @@ vi_estimate_links <- function(out, hash, resolve = TRUE,
       # minLossOption <- apply(tableLabels, 2, which.min)
       # noLinkDec <- minLossOption == n1+1
       # minLossOption[noLinkDec] <- ((n1+1):(n1+n2))[noLinkDec]
-      # Zhat <- rep(-1,n2) # represents the reject option
-      # Zhat[lossMinLossOption < lR] <- minLossOption[lossMinLossOption < lR]
+      # Z_hat <- rep(-1,n2) # represents the reject option
+      # Z_hat[lossMinLossOption < lR] <- minLossOption[lossMinLossOption < lR]
 
     }
   }
 
   if(resolve == T){
-  double_matches <- Zhat[duplicated(Zhat) & Zhat > 0]
+  double_matches <- Z_hat[duplicated(Z_hat) & Z_hat > 0]
   if (lR == Inf){
     to_resolve <- unlist(lapply(double_matches, function(x){
-      dfB_options <- which(Zhat == x)
+      dfB_options <- which(Z_hat == x)
       dfB_probs <- probMaxProbOption[dfB_options]
       non_matches <- dfB_options[-which.max(dfB_probs)]
       non_matches
     }))
-    Zhat[to_resolve] <- 0
+    Z_hat[to_resolve] <- 0
   } else {
     to_resolve <- unlist(lapply(double_matches, function(x){
-      dfB_options <- which(Zhat == x)
+      dfB_options <- which(Z_hat == x)
       dfB_options
     }))
-    Zhat[to_resolve] <- -1
+    Z_hat[to_resolve] <- -1
   }
   }
 
