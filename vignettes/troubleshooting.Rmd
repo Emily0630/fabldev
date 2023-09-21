@@ -37,7 +37,6 @@ df2 <- ncvr_b %>%
 joined <- right_join(df1, df2, by = "voter_id")
 joined$rn[is.na(joined$rn)] <- 0
 Z_true <- joined$rn
-cbind(df2$voter_id, joined$voter_id)
 
 b <- hash$ohe %>%
   sweep(., 1, hash$total_counts, "*") %>%

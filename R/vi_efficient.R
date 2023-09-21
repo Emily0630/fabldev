@@ -1,5 +1,5 @@
 vi_efficient <- function(hash, threshold = 1e-10, tmax = 200, fixed_iterations = NULL,
-                           a = NULL, b = NULL, a_pi = NULL, b_pi = NULL){
+                           b_init = TRUE){
 
   check_every <- 10
 
@@ -19,18 +19,16 @@ vi_efficient <- function(hash, threshold = 1e-10, tmax = 200, fixed_iterations =
   beta_pi <- 1
 
   # Initialize
-  if(is.null(a)){
     a <- rep(1, length(field_marker))
+  if(b_init == T){
+    b <- hash$ohe %>%
+      sweep(., 1, hash$total_counts, "*") %>%
+      colSums()
+  } else {
+    b = 1
   }
-  if(is.null(b)){
-    b <- rep(1, length(field_marker))
-  }
-  if(is.null(a_pi)){
     a_pi <- 1
-  }
-  if(is.null(b_pi)){
     b_pi <- 1
-  }
 
   t <- 1
   ratio <- 1
