@@ -19,17 +19,35 @@ library(fabldev)
 ```
 
 ```{r}
-getwd()
-hash <- readRDS("../../vablpaper/out/big_sim_hash/n_21")
-View(hash)
+hash <- readRDS("../../vablpaper/out/ncvr_combine/hash")
+ncvr_a <- readRDS("../../vablpaper/data/ncvr_a")
+ncvr_b <- readRDS("../../vablpaper/data/ncvr_b")
 
-lookat <- sapply(hash$pattern_counts_by_record, `[`, 122)
+df1 <- ncvr_a %>%
+  select(voter_id) %>% 
+  mutate(rn = row_number()) %>% 
+  arrange(voter_id)
+  
 
-total_counts_2 <- Reduce(`+`, purrr::map(hash$pattern_counts_by_record, ~.x))
-total_counts_3 <- purrr::map(hash$pattern_counts_by_record, ~.x) %>% 
-  do.call(rbind, .) %>% 
+df2 <- ncvr_b %>%
+  select(voter_id) %>% 
+  arrange(voter_id)
+
+
+joined <- right_join(df1, df2, by = "voter_id")
+joined$rn[is.na(joined$rn)] <- 0
+Z_true <- joined$rn
+cbind(df2$voter_id, joined$voter_id)
+
+b <- hash$ohe %>%
+  sweep(., 1, hash$total_counts, "*") %>%
   colSums()
-cbind(total_counts, total_counts_2, total_counts_3) %>% 
-  View()
+
+out <- vi_efficient(hash, b = b_init)
+results <- vi_estimate_links(out, hash)
+eval <- evaluate_links(results$Zhat, Z_true, hash$n1)
+
+cbind(results$Zhat, Z_true)
+
 ```
 

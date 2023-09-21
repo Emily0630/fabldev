@@ -32,8 +32,7 @@ gibbs_efficient <- function(hash, m_prior = 1, u_prior = 1,
   U.SAMPS <- matrix(NA, nrow = length(field_marker), ncol = S)
   L.SAMPS <- vector(length = S)
   PI.SAMPS <- vector(length = S)
-  Z.temp <- rep(0, n1*n2)
-  Z <- rep(n1+1, n2)
+  Z <- rep(0, n2)
   L <- 0
 
   m <- u <- rep(0, length(field_marker))
