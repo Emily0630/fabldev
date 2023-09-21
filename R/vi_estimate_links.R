@@ -93,7 +93,7 @@ vi_estimate_links <- function(out, hash, resolve = TRUE,
   }
   }
 
-  list(Zhat = Zhat,
+  list(Z_hat = Z_hat,
        prob = probMaxProbOption)
 
 }
