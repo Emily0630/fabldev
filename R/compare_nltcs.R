@@ -16,7 +16,7 @@ compare_dob <- function(vec1, vec2){
   matched_components <- matrix(NA, nrow = nrow(ids), ncol = 3)
   for(i in 1:3){
     s <- 2*i - 1
-    match <- str_sub(vec1[ids[, 1]], s, s+1) == str_sub(vec2[ids[, 2]], s, s+1)
+    match <- stringr::str_sub(vec1[ids[, 1]], s, s+1) == stringr::str_sub(vec2[ids[, 2]], s, s+1)
     matched_components[, i] <- match
   }
   score <- rowSums(matched_components)
@@ -36,7 +36,7 @@ compare_location <- function(vec1, vec2){
   matched_components <- matrix(NA, nrow = nrow(ids), ncol = 2)
   for(i in 1:2){
     s <- 2*i - 1
-    match <- str_sub(vec1[ids[, 1]], s, s+1) == str_sub(vec2[ids[, 2]], s, s+1)
+    match <- stringr::str_sub(vec1[ids[, 1]], s, s+1) == stringr::str_sub(vec2[ids[, 2]], s, s+1)
     matched_components[, i] <- match
   }
   score <- rep(1, nrow(ids))
