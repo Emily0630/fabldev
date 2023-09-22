@@ -35,8 +35,6 @@ vi_efficient <- function(hash, threshold = 1e-10, tmax = 200, fixed_iterations =
   elbo_seq <- vector()
 
   while(t <= tmax){
-    print(t)
-
     a_sum <- a %>%
       split(., field_marker) %>%
       sapply(., sum) %>%
