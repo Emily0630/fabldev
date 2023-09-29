@@ -50,36 +50,36 @@ compare_location <- function(vec1, vec2){
   comparison
 }
 
-compare_nltcs <- function(df1, df2){
-  nA <- nrow(df1)
-  nB <- nrow(df2)
-  cd1 <- compare_binary(df1$SEX, df2$SEX)
-  cd2 <- compare_dob(df1$dob, df2$dob)
-  cd3 <- compare_location(df1$location, df2$location)
-  comparison <- cbind(cd1, cd2, cd3)
-
-  cd <- list(comparisons = comparison,
-             n1 = nA,
-             n2 = nB,
-             nDisagLevs = c(2, 3, 3),
-             Ztrue = NULL)
-  cd
-}
-
-# CompareNLTCS2 <- function(df1, df2){
+# compare_nltcs <- function(df1, df2){
 #   nA <- nrow(df1)
 #   nB <- nrow(df2)
 #   cd1 <- compare_binary(df1$SEX, df2$SEX)
-#   cd2 <- compare_binary(df1$DOB_DAY, df2$DOB_DAY)
-#   cd3 <- compare_binary(df1$DOB_MONTH, df2$DOB_MONTH)
-#   cd4 <- compare_binary(df1$DOB_YEAR, df2$DOB_YEAR)
-#   cd5 <- compare_location(df1$location, df2$location)
-#   comparison <- cbind(cd1, cd2, cd3, cd4, cd5)
+#   cd2 <- compare_dob(df1$dob, df2$dob)
+#   cd3 <- compare_location(df1$location, df2$location)
+#   comparison <- cbind(cd1, cd2, cd3)
 #
 #   cd <- list(comparisons = comparison,
 #              n1 = nA,
 #              n2 = nB,
-#              nDisagLevs = c(2, 2, 2, 2, 3),
+#              nDisagLevs = c(2, 3, 3),
 #              Ztrue = NULL)
 #   cd
 # }
+
+compare_nltcs <- function(df1, df2){
+  nA <- nrow(df1)
+  nB <- nrow(df2)
+  cd1 <- compare_binary(df1$SEX, df2$SEX)
+  cd2 <- compare_binary(df1$DOB_DAY, df2$DOB_DAY)
+  cd3 <- compare_binary(df1$DOB_MONTH, df2$DOB_MONTH)
+  cd4 <- compare_binary(df1$DOB_YEAR, df2$DOB_YEAR)
+  cd5 <- compare_location(df1$location, df2$location)
+  comparison <- cbind(cd1, cd2, cd3, cd4, cd5)
+
+  cd <- list(comparisons = comparison,
+             n1 = nA,
+             n2 = nB,
+             nDisagLevs = c(2, 2, 2, 2, 3),
+             Ztrue = NULL)
+  cd
+}

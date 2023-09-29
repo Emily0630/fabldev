@@ -1,6 +1,7 @@
 hash_comparisons__mm<- function(cd,
                     method = "both", R = NULL,
-                    all_patterns = FALSE){
+                    all_patterns = TRUE,
+                    max_K = 1){
 
 
   indicators <- cd[[1]]
@@ -48,27 +49,73 @@ hash_comparisons__mm<- function(cd,
     unique_patterns <- indicators[!duplicated(hash_id), ]
   }
 
+
   temp <- data.frame(indicators, rec1, rec2, hash_id)
+
+  max_K <- 2
+  column_names <- sapply(seq_len(max_K), function(x){
+    paste0("X", x)
+  })
+  # pattern_combinations <- lapply(seq_len(max_K), function(x){
+  #   if(x == 1){
+  #     seq(1, P)
+  #   } else {
+  #     seq(0, P)
+  #   }
+  # }) %>%
+  #   do.call(expand.grid, .) %>%
+  #   data.frame() %>%
+  #   setNames(column_names)
+
+  pattern_combinations <- lapply(seq_len(max_K), function(k){
+    do.call(expand.grid, rep(list(1:P), k)) %>%
+      data.frame() %>%
+      setNames(column_names[1:k])
+  })
+
+  combination_ohe <- lapply(seq_len(max_K), function(k){
+    apply(pattern_combinations[[k]], 1, function(x){
+      if(k == 1){
+        unique_patterns[x, ]
+      } else {
+      unique_patterns[unlist(x), ] %>%
+        colSums()
+      }
+    }) %>%
+      t()
+  })
 
   temp2 <- temp %>%
     group_split(rec2)
 
-  thing <- temp2[[1]]
+  combination_counts <- lapply(temp2, function(y){
+    combo_counts <- lapply(seq_len(max_K), function(k){
+      combo_counts <- y$hash_id %>%
+        as.numeric() %>%
+        combn(k) %>%
+        t() %>%
+        data.frame() %>%
+        setNames(column_names[1:k]) %>%
+        group_by_all() %>%
+        count()
 
-  thing$hash_id %>%
-    as.numeric() %>%
-    combn(2) %>%
-    t() %>%
-    data.frame() %>%
-    group_by(X1, X2) %>%
-    count(n)
+      full_set <- left_join(pattern_combinations[[k]], combo_counts)
+      full_set$n[is.na(full_set$n)] <- 0
+      full_set$n
+    })
+    combo_counts
+  })
 
-  thing$hash_id %>%
-    as.numeric() %>%
-    combn(1) %>%
-    t() %>%
-    data.frame() %>%
-    group_by_all() %>%
-    count()
+  hash_to_file_1 <- temp %>%
+    select(rec1, rec2, hash_id) %>%
+    nest_by(rec2, hash_id, .keep = F) %>%
+    mutate(hash_id = as.integer(hash_id)) %>%
+    rowwise() %>%
+    mutate(N = nrow(data))
 
-  lookat <- combn(as.numeric(thing$hash_id), 2, simplify = F)
+  hash_to_file_1 <- left_join(x = pattern_lookup,
+                              y = hash_to_file_1,
+                              by = c("hash_id", "rec2"))
+
+
+
