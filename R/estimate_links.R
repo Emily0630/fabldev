@@ -84,19 +84,39 @@ estimate_links<- function(Z_samps, n1, lFNM=1, lFM1=1, lFM2=2, lR=Inf,
     }
   }
 
-  if(matching == "multiple"){
-    temp <- Z_hat %>%
-      data.frame(id_1 = .,
-                 id_2 = 1:n2,
-                 prob = probMaxProbOption)
+  # if(matching == "multiple"){
+  #   temp <- Z_hat %>%
+  #     data.frame(id_1 = .,
+  #                id_2 = 1:n2,
+  #                prob = probMaxProbOption)
+  #
+  #   Z_hat <- temp %>%
+  #     filter(id_1 != 0) %>%
+  #     select(id_1, id_2)
+  #
+  #   prob <- temp %>%
+  #     filter(id_1 != 0) %>%
+  #     select(prob)
+  # }
 
-    Z_hat <- temp %>%
-      filter(id_1 != 0) %>%
-      select(id_1, id_2)
+  if (resolve == T){
 
-    prob <- temp %>%
-      filter(id_1 != 0) %>%
-      select(prob)
+    double_matches <- Z_hat[duplicated(Z_hat) & Z_hat > 0]
+    if (lR == Inf){
+      to_resolve <- unlist(lapply(double_matches, function(x){
+        dfB_options <- which(Z_hat == x)
+        dfB_probs <- probMaxProbOption[dfB_options]
+        non_matches <- dfB_options[-which.max(dfB_probs)]
+        non_matches
+      }))
+      Z_hat[to_resolve] <- 0
+    } else {
+      to_resolve <- unlist(lapply(double_matches, function(x){
+        dfB_options <- which(Z_hat == x)
+        dfB_options
+      }))
+      Z_hat[to_resolve] <- -1
+    }
   }
 
   return(list(Z_hat = Z_hat,
