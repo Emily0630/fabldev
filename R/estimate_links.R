@@ -1,7 +1,7 @@
 #' @export
 #'
 estimate_links<- function(Z_samps, n1, lFNM=1, lFM1=1, lFM2=2, lR=Inf,
-                          nonmatch = "BK", matching = "single"){
+                          nonmatch = "BK", matching = "single", resolve = T){
   #
   # This is a complete copy of "linkrecords" from BRL, only modified
   # so that it passes on the posterior link probabilities
