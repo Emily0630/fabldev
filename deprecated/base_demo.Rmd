@@ -55,12 +55,9 @@ hash <- hash_comparisons(cd)
 chain <- gibbs_efficient(hash, S = S, burn = burn)
 results <- estimate_links(chain$Z, n1)
 
-hash <- hash_comparisons(cd, all_patterns = T)
-View(hash$)
-
+#hash <- hash_comparisons(cd, all_patterns = T)
+#View(hash$)
 ```
 
-```{r}
 
-```
 
