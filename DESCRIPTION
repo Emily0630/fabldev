@@ -19,5 +19,5 @@ Suggests:
     knitr,
     rmarkdown
 VignetteBuilder: knitr
-URL: https://github.com/briankundinger/fabldev
-BugReports: https://github.com/briankundinger/fabldev/issues
+URL: 
+BugReports: 
