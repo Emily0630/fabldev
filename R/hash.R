@@ -71,16 +71,6 @@ hash_comparisons <- function(cd,
                               y = hash_to_file_1,
                               by = c("hash_id", "rec2"))
 
-  # counts <-  hash_to_file_1 %>%
-  #   rowwise() %>%
-  #   mutate(N = nrow(data)) %>%
-  #   #select(-data)  %>%
-  #   mutate(hash_id = as.integer(hash_id))
-  #
-  # counts <- left_join(x = pattern_lookup,
-  #                    y = counts,
-  #                    by = c("hash_id", "rec2"))
-
   hash_to_file_1$N[is.na(hash_to_file_1$N)] <- 0
 
   pattern_counts_by_record <- hash_to_file_1 %>%
@@ -91,9 +81,6 @@ hash_comparisons <- function(cd,
   record_counts_by_pattern <- purrr::transpose(pattern_counts_by_record) %>%
     purrr::map(unlist) %>%
     purrr::map(unname)
-
-  # thing <- hash_to_file_1 %>%
-  #   group_split(rec2, .keep = F)
 
   flags <- hash_to_file_1 %>%
     filter(N ==1) %>%

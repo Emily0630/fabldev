@@ -3,8 +3,7 @@
 estimate_links<- function(Z_samps, n1, lFNM=1, lFM1=1, lFM2=2, lR=Inf,
                           nonmatch = "BK", matching = "single", resolve = T){
   #
-  # This is a complete copy of "linkrecords" from BRL, only modified
-  # so that it passes on the posterior link probabilities
+  # Adapted from BRL::linkrecords. See https://CRAN.R-project.org/package=BRL
   #
   #
   #
@@ -83,21 +82,6 @@ estimate_links<- function(Z_samps, n1, lFNM=1, lFM1=1, lFM2=2, lR=Inf,
 
     }
   }
-
-  # if(matching == "multiple"){
-  #   temp <- Z_hat %>%
-  #     data.frame(id_1 = .,
-  #                id_2 = 1:n2,
-  #                prob = probMaxProbOption)
-  #
-  #   Z_hat <- temp %>%
-  #     filter(id_1 != 0) %>%
-  #     select(id_1, id_2)
-  #
-  #   prob <- temp %>%
-  #     filter(id_1 != 0) %>%
-  #     select(prob)
-  # }
 
   if (resolve == T){
 

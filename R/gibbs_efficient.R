@@ -107,11 +107,6 @@ gibbs_efficient <- function(hash, m_prior = 1, u_prior = 1,
     }
   }
 
-  # Z.SAMPS <- Z.SAMPS[,-(1:burn)]
-  # L.SAMPS <- L.SAMPS[-(1:burn)]
-  # M.SAMPS <- M.SAMPS[,-(1:burn)]
-  # U.SAMPS <- U.SAMPS[,-(1:burn)]
-
   final_gibbs <- apply(Z.SAMPS, 2, function(z){
     purrr::imap(z, ~ if(.x == 0) {
       return(0)

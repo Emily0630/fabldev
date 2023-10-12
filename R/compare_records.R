@@ -10,6 +10,8 @@ compare_records <- function(df1,
                              df1_index = NULL,
                              df2_index = NULL){
 
+  # Adapted from BRL::compareRecords. See https://CRAN.R-project.org/package=BRL
+
   warn <- FALSE
 
   # control the input
