@@ -43,17 +43,25 @@ m_prior <- u_prior <- rep(1, length(m))
 alpha <- beta <- 1
 
 cd <- simulate_comparisons(m, u, levels, n1, n2, overlap)
+hash <- hash_comparisons(cd)
 Ztrue <- cd$Ztrue
 
 chain <- gibbs_base(cd, S = S, burn = burn)
 results <- estimate_links(chain, n1)
 
-chain <- gibbs_base_mm(cd, S = S, burn = burn)
-results <- estimate_links_mm(chain, n1)
-
-hash <- hash_comparisons(cd)
 chain <- gibbs_efficient(hash, S = S, burn = burn)
 results <- estimate_links(chain$Z, n1)
+
+chain <- brl_efficient(hash, S = S, burn = burn)
+results <- estimate_links(chain$Z, n1)
+results$Z_hat
+
+chain <- BRL::bipartiteGibbs(cd, nIter = S)
+results <- estimate_links(chain$Z, n1)
+results$Z_hat
+
+# chain <- gibbs_base_mm(cd, S = S, burn = burn)
+# results <- estimate_links_mm(chain, n1)
 
 #hash <- hash_comparisons(cd, all_patterns = T)
 #View(hash$)
