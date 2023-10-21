@@ -90,14 +90,14 @@ simulate_comparisons_mm <- function(m, u, levels, n1, n2, overlap){
   u_list <- split(u, field_marker)
 
   gamma_match <- sapply(m_list, function(x){
-    sample(seq_along(x) - 1, overlap, replace = T, x)
+    sample(seq_along(x) - 1, sum(overlap), replace = T, x)
   })
 
   gamma_nonmatch <- sapply(u_list, function(x){
-    sample(seq_along(x) - 1, N - overlap, replace = T, x)
+    sample(seq_along(x) - 1, N - sum(overlap), replace = T, x)
   })
 
-  if(overlap == 0){
+  if(sum(overlap) == 0){
     indicators <- gamma_nonmatch
   } else {
     indicators[match_index,] <- gamma_match

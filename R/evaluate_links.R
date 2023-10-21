@@ -61,6 +61,15 @@ evaluate_links_mm <- function(Z_hat, Z_true, n1){
   # Z_true = True linkage structure
   # n1 = size of larger file
 
+  if(typeof(Z_hat) == "double"){
+    Z_hat <- data.frame(id_1 = Z_hat,
+                        id_2 = 1:n2) %>%
+      filter(id_1 > 0)
+
+  } else {
+
+  }
+
   n2 <- unique(Z_true$id_2) %>%
     length()
   # n_nonlinks <- Z_hat %>%

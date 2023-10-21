@@ -1,6 +1,8 @@
-vi_efficient <- function(hash, threshold = 1e-5, tmax = 1000, fixed_iterations = NULL,
-                           b_init = TRUE){
+svi_efficient <- function(hash, threshold = 1e-5, tmax = 1000, fixed_iterations = NULL,
+                           b_init = TRUE, B = min(1000, hash$n2), holdout_size = min(1000, hash$n2),
+                          k = 1, tau = 1, seed = 0){
 
+  set.seed(seed)
   check_every <- 10
 
   ohe <- hash$ohe # One-hot encodings e(h_p)
@@ -33,6 +35,11 @@ vi_efficient <- function(hash, threshold = 1e-5, tmax = 1000, fixed_iterations =
   t <- 1
   ratio <- 1
   elbo_seq <- vector()
+  adjustment <- n2 / B
+  #tao <- 1
+  #k <- 1
+
+  holdout <- sample(1:n2, holdout_size)
 
   while(t <= tmax){
     a_sum <- a %>%
@@ -66,17 +73,25 @@ vi_efficient <- function(hash, threshold = 1e-5, tmax = 1000, fixed_iterations =
     single <- exp(digamma(b_pi))
 
     # Phi_j
-    C <- sapply(pattern_counts_by_record, function(x){
-      x %*% phi + single
+    batch <- sample(1:n2, B, replace = F)
+    C <- sapply(batch, function(x){
+      pattern_counts_by_record[[x]] %*% phi + single
     })
 
     # S(Phi)
-    total_nonmatch <- sum(single/ C)
+    total_nonmatch <- adjustment * sum(single/ C)
+    total_counts <- lapply(batch, function(x){
+      hash$pattern_counts_by_record[[x]]
+    }) %>%
+      do.call(rbind, .) %>%
+      colSums() * adjustment
 
     # N_p(Psi)
     K <- sapply(1:P, function(p){
-      sum(record_counts_by_pattern[[p]]/C)
-    })
+      sum(record_counts_by_pattern[[p]][batch]/C)
+    }) * adjustment
+
+    epsilon <- (t + tao) ^ (-k)
 
     AZ <- ohe %>%
       sweep(., 1, phi * K, "*") %>%
@@ -86,22 +101,39 @@ vi_efficient <- function(hash, threshold = 1e-5, tmax = 1000, fixed_iterations =
       sweep(., 1, total_counts - (phi * K), "*") %>%
       colSums()
 
-    a <- alpha + AZ
-    b <- Beta+ BZ
+    a <- (1 - epsilon) * a + epsilon * (alpha + AZ)
+    b <- (1 - epsilon) * b + epsilon * (Beta + BZ)
 
-    a_pi <- alpha_pi + n2 - total_nonmatch
-    b_pi <- beta_pi + total_nonmatch
+    a_pi <- (1 - epsilon) * a_pi  +
+      epsilon * (alpha_pi + n2 - total_nonmatch)
+    b_pi <- (1 - epsilon) * b_pi +
+      epsilon * (beta_pi + total_nonmatch)
 
     # ELBO
     elbo_pieces <- vector(length = 6)
-    elbo_pieces[1] <- sapply(1:n2, function(j){
-      sum(pattern_counts_by_record[[j]] * (phi *(weights - log(phi) + log(C[j]))/ C[j] +
-                                             u_p))
-    }) %>%
-      sum(.)
+    C_holdout <- sapply(holdout, function(x){
+      pattern_counts_by_record[[x]] %*% phi + single
+    })
 
-    #elbo_pieces[2] <- -sum(single/C *log(single/C)) + total_nonmatch * log(n1) -log(n1)*n2
-    elbo_pieces[2] <- single * sum(1/C *log(C)) + total_nonmatch * (log(n1) - log(single)) -log(n1)*n2
+    holdout_nonmatch <- n2/holdout_size * sum(single/ C_holdout)
+    # elbo_pieces[1] <- sapply(seq_along(holdout), function(j){
+    #   record <- batch[j]
+    #   sum(pattern_counts_by_record[[record]] * (phi *(weights - log(phi) + log(C[j]))/ C[j] +
+    #                                          u_p))
+    # }) %>%
+    #   sum(.) * adjustment
+    #
+    # elbo_pieces[2] <-  single * adjustment * sum(1/C *log(C)) + total_nonmatch * log(n1) -log(n1)*n2
+    #
+    elbo_pieces[1] <- sapply(seq_along(holdout), function(j){
+      record <- holdout[j]
+      sum(pattern_counts_by_record[[record]] * (phi *(weights - log(phi) + log(C_holdout[j]))/ C_holdout[j] +
+                                                  u_p))
+    }) %>%
+      sum(.) * n2/ holdout_size
+
+    elbo_pieces[2] <-  n2/ holdout_size * single * sum(1/C_holdout *log(C_holdout)) + holdout_nonmatch * (log(n1) - log(single)) -log(n1)*n2
+
 
     elbo_pieces[3] <- lbeta(a_pi, b_pi) - lbeta(alpha_pi, beta_pi)
 
@@ -153,6 +185,10 @@ vi_efficient <- function(hash, threshold = 1e-5, tmax = 1000, fixed_iterations =
 
 
   }
+
+  C <- sapply(1:n2, function(x){
+    pattern_counts_by_record[[x]] %*% phi + single
+  })
 
   list(pattern_weights = phi,
        C = C,

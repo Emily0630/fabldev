@@ -24,11 +24,13 @@ library(fabldev)
 # n1 <- 2^size_of_sim
 # n2 <- 2^size_of_sim
 # overlap <- 2^((k-1):(k - 1 - layers))
-n1 <- 500
-n2 <- 100
-overlap <- c(20, 10, 2)
+n1 <- 50
+n2 <- 50
+overlap <- c(10, 5)
 S = 50
 burn = S * .1
+tmax <- 50
+b_init <- TRUE
 
 show_progress <- T
 fast = F
@@ -45,29 +47,39 @@ m_prior <- u_prior <- rep(1, length(m))
 alpha <- beta <- 1
 
 cd <- simulate_comparisons_mm(m, u, levels, n1, n2, overlap)
+hash <- hash_comparisons(cd)
+hash_mm <- hash_comparisons_mm(cd, max_K = length(overlap))
+#hash <- hash_mm
 Z_true <- cd$Z_true
 
-chain <- gibbs_base(cd, S = S, burn = burn)
-results <- estimate_links(chain$Z, n1, matching = "multiple")
-eval <- evaluate_links_mm(results$Z_hat, Z_true, n1)
-
-chain <- gibbs_base_mm(cd, S = S, burn = burn)
-results <- estimate_links_mm(chain$Z, n1)
-eval <- evaluate_links_mm(results$Z_hat, Z_true, n1)
-
-
-hash <- hash_comparisons(cd)
 chain <- gibbs_efficient(hash, S = S, burn = burn)
-results <- estimate_links(chain$Z, n1, matching = "multiple")
+results <- estimate_links(chain$Z, n1)
 eval <- evaluate_links_mm(results$Z_hat, Z_true, n1)
+eval
 
 chain <- gibbs_efficient_mm(hash, S = S, burn = burn)
 results <- estimate_links_mm(chain$Z, n1)
 eval <- evaluate_links_mm(results$Z_hat, Z_true, n1)
+eval
 
+# out <- vi_efficient(hash)
+# results <- vi_estimate_links(out, hash)
+# eval <- evaluate_links_mm(results$Z_hat, Z_true, n1)
+# eval
+
+out <- vi_efficient_mm(hash_mm, fixed_iterations = 50, use_elbo = F)
+results <- vi_estimate_links_mm(out, hash_mm)
+eval <- evaluate_links_mm(results$Z_hat, Z_true, n1)
+eval
 ```
 
 ```{r}
-
+# chain <- gibbs_base(cd, S = S, burn = burn)
+# results <- estimate_links(chain$Z, n1, matching = "multiple")
+# eval <- evaluate_links_mm(results$Z_hat, Z_true, n1)
+# 
+# chain <- gibbs_base_mm(cd, S = S, burn = burn)
+# results <- estimate_links_mm(chain$Z, n1)
+# eval <- evaluate_links_mm(results$Z_hat, Z_true, n1)
 ```
 

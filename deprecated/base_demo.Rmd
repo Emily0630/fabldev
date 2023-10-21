@@ -16,6 +16,7 @@ knitr::opts_chunk$set(
 
 ```{r setup}
 library(fabldev)
+library(ggplot2)
 ```
 
 
@@ -60,11 +61,37 @@ chain <- BRL::bipartiteGibbs(cd, nIter = S)
 results <- estimate_links(chain$Z, n1)
 results$Z_hat
 
+out <- vi_efficient(hash)
+results <- vi_estimate_links(out, hash)
+evaluate_links(results$Z_hat, Ztrue, n1)
+out$t
+elbo_vi <- data.frame(elbo = out$elbo_seq,
+                      iter = 1:out$t, 
+                      method = "vi")
+
+out <- svi_efficient(hash, B = 100, holdout_size = 100, k = 1, seed = 42)
+results <- vi_estimate_links(out, hash)
+evaluate_links(results$Z_hat, Ztrue, n1)
+out$t
+elbo_svi <- data.frame(elbo = out$elbo_seq,
+                      iter = seq_along(out$elbo_seq), 
+                      method = "svi")
+
+elbo_df <- rbind(elbo_vi, elbo_svi)
+
+elbo_df %>% 
+  ggplot() +
+  aes(x = iter, y = elbo, color = method) +
+  geom_line()
+  
+
 # chain <- gibbs_base_mm(cd, S = S, burn = burn)
 # results <- estimate_links_mm(chain, n1)
 
 #hash <- hash_comparisons(cd, all_patterns = T)
 #View(hash$)
+
+#cbind(out_vi$b_pi, out_svi$b_pi)
 ```
 
 
