@@ -29,8 +29,6 @@ vi_estimate_links_mm <- function(out, hash, resolve = TRUE,
   #   out$pattern_weights/out$C[j]
   # })
 
-  record <- 1
-
   matches <- lapply(1:n2, function(x){
     counts <- combination_counts[[x]] %>% unlist()
     probs <- pattern_weights * counts/ C[x]
@@ -42,23 +40,35 @@ vi_estimate_links_mm <- function(out, hash, resolve = TRUE,
 
 
     matching_records <- lapply(matching_patterns, function(y){
-      hash$hash_to_file_1[[x]][[y]]
-    }) %>%
-      unlist()
+      records <- hash$hash_to_file_1[[x]][[y]]
+      prob <- rep(probs_combined[y], length(records))
+      if(length(records) == 0){
+        return(data.frame(id_2 = x,
+                          id_1 = NA,
+                          prob = NA))
+      } else {
 
-    if(length(matching_records) == 0){
-      return(data.frame(id_2 = x,
-                        id_1 = NA,
-                        prob = NA))
-    } else {
-
-    return(data.frame(id_2 = x,
-               id_1 = matching_records,
-               prob = matching_probs))
+        return(data.frame(id_2 = x,
+                          id_1 = records,
+                          prob = prob))
     }
+      }) %>%
+      do.call(rbind, .)
+
+    # if(length(matching_records) == 0){
+    #   return(data.frame(id_2 = x,
+    #                     id_1 = NA,
+    #                     prob = NA))
+    # } else {
+    #
+    # return(data.frame(id_2 = x,
+    #            id_1 = matching_records,
+    #            prob = matching_probs))
+
   }) %>%
     do.call(rbind, .) %>%
-    filter(!is.na(prob))
+    filter(!is.na(prob)) %>%
+    arrange(id_2, id_1)
 
   Z_hat <- matches %>%
     select(id_1, id_2)

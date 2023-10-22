@@ -1,7 +1,7 @@
 hash_comparisons_mm<- function(cd,
                     method = "both", R = NULL,
                     all_patterns = FALSE,
-                    max_K = 2){
+                    max_K){
 
 
   indicators <- cd[[1]]
@@ -56,7 +56,6 @@ hash_comparisons_mm<- function(cd,
     count() %>%
     pull()
 
-  max_K <- 2
   column_names <- sapply(seq_len(max_K), function(x){
     paste0("X", x)
   })
@@ -102,6 +101,10 @@ hash_comparisons_mm<- function(cd,
   temp2 <- temp %>%
     group_split(rec2)
 
+  # by_names <- sapply(1:max_K, function(x){
+  #   paste0("X", x)
+  # })
+
   combination_counts <- lapply(temp2, function(y){
     combo_counts <- lapply(seq_len(max_K), function(k){
       combo_counts <- y$hash_id %>%
@@ -113,7 +116,13 @@ hash_comparisons_mm<- function(cd,
         group_by_all() %>%
         count()
 
-      full_set <- left_join(pattern_combinations[[k]], combo_counts)
+      by_names <- sapply(1:k, function(x){
+        paste0("X", x)
+      })
+
+      full_set <- left_join(pattern_combinations[[k]],
+                            combo_counts,
+                            by = by_names)
       full_set$n[is.na(full_set$n)] <- 0
       full_set$n
     })
