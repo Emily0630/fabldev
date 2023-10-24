@@ -111,6 +111,7 @@ brl_efficient <- function(hash, rejection = F, m_prior = 1, u_prior = 1,
         probs <- c((n1 - L) * (n2 - L - 1 + beta) / (L + alpha),
                    hash_weights)
         flag <- 1
+        iter <- 0
         while(flag == 1){
           pattern <- sample(candidates_P, 1, prob = probs)
           if(pattern == 0){
@@ -124,6 +125,28 @@ brl_efficient <- function(hash, rejection = F, m_prior = 1, u_prior = 1,
               Z[j] <- i
               flag <- 0
             }
+          }
+          iter <- iter + 1
+          if(iter == round(n1 / P)){
+            already_matched <- Z[Z > 0]
+            temp_hash <- lapply(hash_to_file_1[[j]], function(x){
+              x[!(x %in% already_matched)]
+            })
+            temp_counts <- sapply(temp_hash, length)
+            temp_weights <- unique_weights * temp_counts
+
+            Z_pattern[j] <-
+              sample(candidates_P, 1,
+                     prob = c((n1 - L) * (n2 - L - 1 + beta) / (L + alpha),
+                              temp_weights))
+
+            Z_record <- if(Z_pattern[j] == 0){
+              0
+            } else {
+              sample_with_1(temp_hash[[Z_pattern[j]]], 1)
+            }
+            Z[j] <- Z_record
+            flag <- 0
           }
         }
       }
