@@ -1,8 +1,8 @@
 #' @export
 #'
-brl_efficient <- function(hash, m_prior = 1, u_prior = 1,
-                       alpha = 1, beta = 1, S = 1000, burn = 100,
-                       show_progress = T, seed = 0){
+brl_efficient <- function(hash, rejection = F, m_prior = 1, u_prior = 1,
+                          alpha = 1, beta = 1, S = 1000, burn = 100,
+                          show_progress = T, seed = 0){
   # Implements bipartite record linkage with BK Sampling Mechanism
   #
   # Arguments
@@ -38,7 +38,7 @@ brl_efficient <- function(hash, m_prior = 1, u_prior = 1,
   L <- 0
 
   m <- u <- rep(0, length(field_marker))
-  matches <- rep(0,P)
+  matches <- rep(0, P)
   #already_matched <- rep(0, n1)
   #set.seed(1)
 
@@ -84,27 +84,49 @@ brl_efficient <- function(hash, m_prior = 1, u_prior = 1,
       if(Z[j] > 0){
         L <- L - 1
       }
-
       Z[j] <- 0
-      already_matched <- Z[Z > 0]
-      temp_hash <- lapply(hash_to_file_1[[j]], function(x){
-        x[!(x %in% already_matched)]
-      })
-      temp_counts <- sapply(temp_hash, length)
-      temp_weights <- unique_weights * temp_counts
 
-      Z_pattern[j] <-
-        sample(candidates_P, 1,
-               prob = c((n1 - L) * (n2 - L - 1 + beta) / (L + alpha),
-                        temp_weights))
+      if(!rejection){
+        already_matched <- Z[Z > 0]
+        temp_hash <- lapply(hash_to_file_1[[j]], function(x){
+          x[!(x %in% already_matched)]
+        })
+        temp_counts <- sapply(temp_hash, length)
+        temp_weights <- unique_weights * temp_counts
 
-      Z_record <- if(Z_pattern[j] == 0){
-        0
-      } else {
-        sample_with_1(temp_hash[[Z_pattern[j]]], 1)
+        Z_pattern[j] <-
+          sample(candidates_P, 1,
+                 prob = c((n1 - L) * (n2 - L - 1 + beta) / (L + alpha),
+                          temp_weights))
+
+        Z_record <- if(Z_pattern[j] == 0){
+          0
+        } else {
+          sample_with_1(temp_hash[[Z_pattern[j]]], 1)
+        }
+        Z[j] <- Z_record
       }
-
-      Z[j] <- Z_record
+      else{
+        hash_weights <- counts_by_rec[[j]] * unique_weights
+        probs <- c((n1 - L) * (n2 - L - 1 + beta) / (L + alpha),
+                   hash_weights)
+        flag <- 1
+        while(flag == 1){
+          pattern <- sample(candidates_P, 1, prob = probs)
+          if(pattern == 0){
+            Z_[j] <- 0
+            flag <- 0
+          }
+          else{
+            index <- ceiling(runif(1) * counts_by_rec[[j]][pattern])
+            i <- hash_to_file_1[[j]][[pattern]][index]
+            if(!(i %in% Z)){
+              Z_[j] <- i
+              flag <- 0
+            }
+          }
+        }
+      }
 
       if(Z[j] > 0){
         L <- L + 1
@@ -126,7 +148,8 @@ brl_efficient <- function(hash, m_prior = 1, u_prior = 1,
     if(show_progress){
       if (s %% (S / 100) == 0) {
         flush.console()
-        cat("\r", paste("Simulation", ": ", s / (S / 100), "% complete", sep = ""))
+        cat("\r", paste("Simulation", ": ", s / (S / 100), "% complete",
+                        sep = ""))
       }
     }
   }
