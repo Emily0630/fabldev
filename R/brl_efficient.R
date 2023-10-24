@@ -33,7 +33,6 @@ brl_efficient <- function(hash, m_prior = 1, u_prior = 1,
   M.SAMPS <- matrix(NA, nrow = length(field_marker), ncol = S)
   U.SAMPS <- matrix(NA, nrow = length(field_marker), ncol = S)
   L.SAMPS <- vector(length = S)
-  PI.SAMPS <- vector(length = S)
   Z <- rep(0, n2)
   Z_pattern <- rep(0, n2)
   L <- 0
@@ -78,9 +77,13 @@ brl_efficient <- function(hash, m_prior = 1, u_prior = 1,
       matrix(., nrow = P, byrow = TRUE)
 
     unique_weights <- exp(rowSums(ratio * unique_patterns, na.rm = TRUE))
-    #pi <- rbeta(1, L + alpha, n2 - L + beta)
+
 
     for(j in sample(1:n2)){
+
+      if(Z[j] > 0){
+        L <- L - 1
+      }
 
       Z[j] <- 0
       already_matched <- Z[Z > 0]
@@ -90,11 +93,10 @@ brl_efficient <- function(hash, m_prior = 1, u_prior = 1,
       temp_counts <- sapply(temp_hash, length)
       temp_weights <- unique_weights * temp_counts
 
-      L <- sum(Z > 0)
-      pi <- rbeta(1, L + alpha, n2 - L - 1 + beta)
-
-      Z_pattern[j] <- sample(candidates_P, 1,
-                           prob = c(1 - pi, temp_weights * pi / (n1 - L)))
+      Z_pattern[j] <-
+        sample(candidates_P, 1,
+               prob = c((n1 - L) * (n2 - L - 1 + beta) / (L + alpha),
+                        temp_weights))
 
       Z_record <- if(Z_pattern[j] == 0){
         0
@@ -104,11 +106,10 @@ brl_efficient <- function(hash, m_prior = 1, u_prior = 1,
 
       Z[j] <- Z_record
 
+      if(Z[j] > 0){
+        L <- L + 1
+      }
     }
-
-
-    #L <- sum(Z < P + 1)
-    #L <- sum(Z > 0)
     hash_matches <- factor(Z_pattern, levels = 0:P)
     df <- data.frame(hash_matches)
     matches <- df %>%
@@ -121,7 +122,6 @@ brl_efficient <- function(hash, m_prior = 1, u_prior = 1,
     M.SAMPS[,s] <- m
     U.SAMPS[,s] <- u
     L.SAMPS[s] <- L
-    PI.SAMPS[s] <- pi
 
     if(show_progress){
       if (s %% (S / 100) == 0) {
@@ -147,7 +147,6 @@ brl_efficient <- function(hash, m_prior = 1, u_prior = 1,
   list(Z = Z.SAMPS,
        m = M.SAMPS,
        u = U.SAMPS,
-       overlap = L.SAMPS,
-       pi = PI.SAMPS)
+       overlap = L.SAMPS)
 
 }
