@@ -114,14 +114,14 @@ brl_efficient <- function(hash, rejection = F, m_prior = 1, u_prior = 1,
         while(flag == 1){
           pattern <- sample(candidates_P, 1, prob = probs)
           if(pattern == 0){
-            Z_[j] <- 0
+            Z[j] <- 0
             flag <- 0
           }
           else{
             index <- ceiling(runif(1) * counts_by_rec[[j]][pattern])
             i <- hash_to_file_1[[j]][[pattern]][index]
             if(!(i %in% Z)){
-              Z_[j] <- i
+              Z[j] <- i
               flag <- 0
             }
           }
