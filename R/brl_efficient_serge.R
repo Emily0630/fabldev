@@ -18,7 +18,7 @@ hash_add_t <- function(hash){
 #' @export
 #'
 brl_efficient_serge <- function(hash, m_prior = 1, u_prior = 1,
-                          alpha = 1, beta = 1, S = 1000, burn = 100,
+                          alpha = 1, beta = 1, S = 1000, burn = round(S * .1),
                           show_progress = T, seed = 0, reject_iter = round(hash$n2/length(hash$total_counts))){
   # Implements bipartite record linkage with BK Sampling Mechanism
   #
@@ -109,6 +109,7 @@ brl_efficient_serge <- function(hash, m_prior = 1, u_prior = 1,
 
 
       hash_weights <- counts_by_rec[[j]] * unique_weights
+
       probs <- c((n1 - L) * (n2 - L - 1 + beta) / (L + alpha),
                  hash_weights)
       flag <- 1

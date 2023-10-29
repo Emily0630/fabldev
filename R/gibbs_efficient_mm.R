@@ -1,7 +1,7 @@
 #' @export
 #'
 gibbs_efficient_mm <- function(hash, m_prior = 1, u_prior = 1,
-                               alpha = 1, beta = 1, S = 1000, burn = 100,
+                               alpha = 1, beta = 1, S = 1000, burn = round(S * .1),
                                show_progress = T){
   # Implements bipartite record linkage with BK Sampling Mechanism
   #
