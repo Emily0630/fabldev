@@ -80,20 +80,20 @@ n_12_xi <- sum(n_p_xi)
 log_ratio <- sum(n_p_xi * log(m_p) + (N_p - n_p_xi) * log(u_p)) +
   sum((alpha - a) * m + (beta - b) * u) +
   sapply(list(a, b), function(y){
-  split(y, field_marker) %>%
-    sapply(., function(x){
-      sum(lgamma(x)) - lgamma(sum(x))
-    })%>%
-    sum(.)
-}) %>%
+    split(y, field_marker) %>%
+      sapply(., function(x){
+        sum(lgamma(x)) - lgamma(sum(x))
+      })%>%
+      sum(.)
+  }) %>%
   sum(.) -
   sapply(list(alpha, beta), function(y){
-  split(y, field_marker) %>%
-    sapply(., function(x){
-      sum(lgamma(x)) - lgamma(sum(x))
-    })%>%
-    sum(.)
-}) %>%
+    split(y, field_marker) %>%
+      sapply(., function(x){
+        sum(lgamma(x)) - lgamma(sum(x))
+      })%>%
+      sum(.)
+  }) %>%
   sum(.) +
   (alpha_pi - a_pi + n_12_xi) * log(pi) +
   (beta_pi - b_pi + n2 - n_12_xi)  * log(1 - pi) +
