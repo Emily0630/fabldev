@@ -1,19 +1,17 @@
-#' @export
-#'
-#'
-hash_add_t <- function(hash){
-  pair_to_pattern <- vector(mode = "list", length = hash$n2)
-  for(j in 1:hash$n2){
-    pair_to_pattern[[j]] <- rep(0, hash$n1)
-    for(p in 1:length(hash$total_counts)){
-      for(i in 1:hash$pattern_counts_by_record[[j]][p]){
-        pair_to_pattern[[j]][hash$hash_to_file_1[[j]][[p]]] <- p
-      }
-    }
-  }
-  hash$pair_to_pattern <- pair_to_pattern
-  return(hash)
-}
+
+# hash_add_t <- function(hash){
+#   pair_to_pattern <- vector(mode = "list", length = hash$n2)
+#   for(j in 1:hash$n2){
+#     pair_to_pattern[[j]] <- rep(0, hash$n1)
+#     for(p in 1:length(hash$total_counts)){
+#       for(i in 1:hash$pattern_counts_by_record[[j]][p]){
+#         pair_to_pattern[[j]][hash$hash_to_file_1[[j]][[p]]] <- p
+#       }
+#     }
+#   }
+#   hash$pair_to_pattern <- pair_to_pattern
+#   return(hash)
+# }
 
 #' @export
 #'

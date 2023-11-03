@@ -60,6 +60,12 @@ hash_comparisons <- function(cd,
     data.frame() %>%
     setNames(., c("hash_id", "rec2"))
 
+  pair_to_pattern <- temp %>%
+    select(hash_id, rec2) %>%
+    group_split(rec2, .keep = F) %>%
+    lapply(., pull) %>%
+    lapply(., as.double)
+
   hash_to_file_1 <- temp %>%
     select(rec1, rec2, hash_id) %>%
     nest_by(rec2, hash_id, .keep = F) %>%
@@ -109,6 +115,8 @@ hash_comparisons <- function(cd,
   #  flags <- NULL
   #}
 
+    temp
+
 
   patterns <- list(ohe = unique_patterns,
                    total_counts = pattern_counts,
@@ -118,7 +126,8 @@ hash_comparisons <- function(cd,
                    flags = flags,
                    field_marker = field_marker,
                    n1 = n1,
-                   n2 = n2)
+                   n2 = n2,
+                   pair_to_pattern = pair_to_pattern)
   patterns
 
 }

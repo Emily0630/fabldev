@@ -47,6 +47,9 @@ cd <- simulate_comparisons(m, u, levels, n1, n2, overlap)
 hash <- hash_comparisons(cd)
 Ztrue <- cd$Ztrue
 
+chain <- brl_efficient_serge(hash, S = S, burn = burn)
+results <- estimate_links(chain$Z, n1)
+
 chain <- gibbs_base(cd, S = S, burn = burn)
 results <- estimate_links(chain, n1)
 
