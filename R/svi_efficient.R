@@ -2,7 +2,7 @@
 #'
 #' @export
 
-svi_efficient <- function(hash, threshold = 1e-5, tmax = 1000, fixed_iterations = NULL,
+svi_efficient <- function(hash, threshold = 1e-8, tmax = 1000, fixed_iterations = NULL,
                            b_init = TRUE, B = min(1000, hash$n2), holdout_size = min(1000, hash$n2),
                           k = 1, tau = 1, seed = 0){
 
