@@ -113,28 +113,25 @@ svi_efficient <- function(hash, threshold = 1e-5, tmax = 1000, fixed_iterations 
 
     # ELBO
     elbo_pieces <- vector(length = 6)
-    C_holdout <- sapply(holdout, function(x){
+    # C_holdout <- sapply(holdout, function(x){
+    #   pattern_counts_by_record[[x]] %*% phi + single
+    # })
+    #
+    # holdout_nonmatch <- n2/holdout_size * sum(single/ C_holdout)
+
+    C_full <- sapply(1:n2, function(x){
       pattern_counts_by_record[[x]] %*% phi + single
     })
 
-    holdout_nonmatch <- n2/holdout_size * sum(single/ C_holdout)
-    # elbo_pieces[1] <- sapply(seq_along(holdout), function(j){
-    #   record <- batch[j]
-    #   sum(pattern_counts_by_record[[record]] * (phi *(weights - log(phi) + log(C[j]))/ C[j] +
-    #                                          u_p))
-    # }) %>%
-    #   sum(.) * adjustment
-    #
-    # elbo_pieces[2] <-  single * adjustment * sum(1/C *log(C)) + total_nonmatch * log(n1) -log(n1)*n2
-    #
-    elbo_pieces[1] <- sapply(seq_along(holdout), function(j){
-      record <- holdout[j]
-      sum(pattern_counts_by_record[[record]] * (phi *(weights - log(phi) + log(C_holdout[j]))/ C_holdout[j] +
+    full_nonmatch <- sum(single/ C_full)
+
+    elbo_pieces[1] <- sapply(1:n2, function(j){
+      sum(pattern_counts_by_record[[record]] * (phi *(weights - log(phi) + log(C_full[j]))/ C_full[j] +
                                                   u_p))
     }) %>%
-      sum(.) * n2/ holdout_size
+      sum(.)
 
-    elbo_pieces[2] <-  n2/ holdout_size * single * sum(1/C_holdout *log(C_holdout)) + holdout_nonmatch * (log(n1) - log(single)) -log(n1)*n2
+    elbo_pieces[2] <-  single * sum(1/C_full *log(C_full)) + full_nonmatch * (log(n1) - log(single)) -log(n1)*n2
 
 
     elbo_pieces[3] <- lbeta(a_pi, b_pi) - lbeta(alpha_pi, beta_pi)
@@ -203,3 +200,12 @@ svi_efficient <- function(hash, threshold = 1e-5, tmax = 1000, fixed_iterations 
 
 }
 
+# elbo_pieces[1] <- sapply(seq_along(holdout), function(j){
+#   record <- holdout[j]
+#   sum(pattern_counts_by_record[[record]] * (phi *(weights - log(phi) + log(C_holdout[j]))/ C_holdout[j] +
+#                                               u_p))
+# }) %>%
+#   sum(.) * n2/ holdout_size
+#
+# elbo_pieces[2] <-  n2/ holdout_size * single * sum(1/C_holdout *log(C_holdout)) + holdout_nonmatch * (log(n1) - log(single)) -log(n1)*n2
+#
