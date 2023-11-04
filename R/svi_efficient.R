@@ -40,8 +40,6 @@ svi_efficient <- function(hash, threshold = 1e-5, tmax = 1000, fixed_iterations 
   ratio <- 1
   elbo_seq <- vector()
   adjustment <- n2 / B
-  #tao <- 1
-  #k <- 1
 
   holdout <- sample(1:n2, holdout_size)
 
@@ -95,7 +93,7 @@ svi_efficient <- function(hash, threshold = 1e-5, tmax = 1000, fixed_iterations 
       sum(record_counts_by_pattern[[p]][batch]/C)
     }) * adjustment
 
-    epsilon <- (t + tao) ^ (-k)
+    epsilon <- (t + tau) ^ (-k)
 
     AZ <- ohe %>%
       sweep(., 1, phi * K, "*") %>%
