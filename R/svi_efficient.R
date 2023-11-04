@@ -41,7 +41,7 @@ svi_efficient <- function(hash, threshold = 1e-5, tmax = 1000, fixed_iterations 
   elbo_seq <- vector()
   adjustment <- n2 / B
 
-  holdout <- sample(1:n2, holdout_size)
+  #holdout <- sample(1:n2, holdout_size)
 
   while(t <= tmax){
     a_sum <- a %>%
@@ -126,7 +126,7 @@ svi_efficient <- function(hash, threshold = 1e-5, tmax = 1000, fixed_iterations 
     full_nonmatch <- sum(single/ C_full)
 
     elbo_pieces[1] <- sapply(1:n2, function(j){
-      sum(pattern_counts_by_record[[record]] * (phi *(weights - log(phi) + log(C_full[j]))/ C_full[j] +
+      sum(pattern_counts_by_record[[j]] * (phi *(weights - log(phi) + log(C_full[j]))/ C_full[j] +
                                                   u_p))
     }) %>%
       sum(.)
