@@ -22,8 +22,8 @@ combine_hash <- function(hash_list, n1, n2){
     purrr::map(`[[`, "flags") %>%
     purrr::flatten()
 
-  pairs_to_pattern <- hash_list %>%
-    purrr::map(`[[`, "pairs_to_pattern") %>%
+  pair_to_pattern <- hash_list %>%
+    purrr::map(`[[`, "pair_to_pattern") %>%
     purrr::flatten()
 
   patterns <- list(ohe = hash_list[[1]]$ohe,
@@ -35,6 +35,6 @@ combine_hash <- function(hash_list, n1, n2){
                    field_marker = hash_list[[1]]$field_marker,
                    n1 = n1,
                    n2 = n2,
-                   pairs_to_pattern = pairs_to_pattern)
+                   pair_to_pattern = pair_to_pattern)
 
 }

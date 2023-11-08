@@ -80,16 +80,18 @@ svi_efficient <- function(hash, threshold = 1e-5, tmax = 1000, fixed_iterations 
       pattern_counts_by_record[[x]] %*% phi + single
     })
 
-    # S(Phi)
+    # S(Phi, B)
     total_nonmatch <- adjustment * sum(single/ C)
-    total_counts <- lapply(batch, function(x){
+
+    # N_p(B)
+    total_counts <- lapply(batch, function(x){ #This is only in SVI, not standard vabl
       hash$pattern_counts_by_record[[x]]
     }) %>%
       do.call(rbind, .) %>%
       colSums() * adjustment
 
-    # N_p(Psi)
-    K <- sapply(1:P, function(p){
+    # N_p(Psi, B)
+    K <- sapply(1:P, function(p){ #The "batch" subsetting is only in SVI
       sum(record_counts_by_pattern[[p]][batch]/C)
     }) * adjustment
 
@@ -113,11 +115,7 @@ svi_efficient <- function(hash, threshold = 1e-5, tmax = 1000, fixed_iterations 
 
     # ELBO
     elbo_pieces <- vector(length = 6)
-    # C_holdout <- sapply(holdout, function(x){
-    #   pattern_counts_by_record[[x]] %*% phi + single
-    # })
-    #
-    # holdout_nonmatch <- n2/holdout_size * sum(single/ C_holdout)
+
 
     C_full <- sapply(1:n2, function(x){
       pattern_counts_by_record[[x]] %*% phi + single
