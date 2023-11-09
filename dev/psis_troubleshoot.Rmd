@@ -50,6 +50,11 @@ Ztrue <- cd$Ztrue
 out <- vi_efficient(hash)
 results <- vi_estimate_links(out, hash)
 evaluate_links(results$Z_hat, Ztrue, n1)
+
+
+chain <- gibbs_efficient(hash)
+results_fabl <- estimate_links(chain$Z, n1)
+eval_fabl <- evaluate_links(results_fabl$Z_hat, Ztrue, n1)
 ```
 
 
