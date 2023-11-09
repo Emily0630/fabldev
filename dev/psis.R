@@ -111,7 +111,8 @@ for(i in 1:10000){
   log_ratios[i] <- log_joint - log_var
 }
 
-
+out$elbo_seq
+mean(log_ratios)
 
 
 # m <- a %>%
