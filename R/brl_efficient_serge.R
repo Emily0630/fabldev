@@ -17,7 +17,8 @@
 #'
 brl_efficient_serge <- function(hash, m_prior = 1, u_prior = 1,
                           alpha = 1, beta = 1, S = 1000, burn = round(S * .1),
-                          show_progress = T, seed = 0, reject_iter = round(hash$n2/length(hash$total_counts))){
+                          show_progress = T, seed = 0, reject_iter = round(hash$n2/length(hash$total_counts)),
+                          mode = "rejection"){
   # Implements bipartite record linkage with BK Sampling Mechanism
   #
   # Arguments
@@ -95,8 +96,7 @@ brl_efficient_serge <- function(hash, m_prior = 1, u_prior = 1,
 
     unique_weights <- exp(rowSums(ratio * unique_patterns, na.rm = TRUE))
 
-
-    for(j in sample(1:n2)){
+    for(j in 1:n2){
 
       if(Z[j] > 0){
         L <- L - 1
@@ -104,63 +104,117 @@ brl_efficient_serge <- function(hash, m_prior = 1, u_prior = 1,
       }
       Z[j] <- 0
 
+      empty_weight <- (n1 - L) * (n2 - L - 1 + beta) / (L + alpha)
 
+      if(mode == "base"){
+        available <- which(Z_inv == 0)
+        temp_weights <- c(empty_weight, unique_weights[pair_to_pattern[[j]][available]])
 
-      hash_weights <- counts_by_rec[[j]] * unique_weights
-
-      probs <- c((n1 - L) * (n2 - L - 1 + beta) / (L + alpha),
-                 hash_weights)
-      flag <- 1
-      iter <- 0
-      while(flag == 1){
+        Z[j] <- sample(c(0, available), 1, prob = temp_weights)
+        if(Z[j] > 0){
+          Z_pattern[j] <- pair_to_pattern[[j]][Z[j]]
+        }
+        else{
+          Z_pattern[j] <- 0
+        }
+      }
+      else if(mode == "efficient"){
+        n_current <- counts_by_rec[[j]]
+        for(k in 1:n2){
+          if(Z[k] > 0){
+            ind <- pair_to_pattern[[j]][Z[k]]
+            n_current[ind] <- n_current[ind] - 1
+          }
+        }
+        temp_weights <- n_current * unique_weights
+        probs <- c(empty_weight, temp_weights)
         pattern <- sample(candidates_P, 1, prob = probs)
         if(pattern == 0){
           Z[j] <- 0
-          flag <- 0
+          Z_pattern[j] <- 0
         }
         else{
-          index <- ceiling(runif(1) * counts_by_rec[[j]][pattern])
-          i <- hash_to_file_1[[j]][[pattern]][index]
-          if(Z_inv[i] == 0){
-            Z[j] <- i
-            flag <- 0
-          }
-        }
-        iter <- iter + 1
-        if(iter == reject_iter){
-
-          n_current <- counts_by_rec[[j]]
-          for(k in 1:n2){
-            if(Z[k] > 0){
-              ind <- pair_to_pattern[[j]][Z[k]]
-              n_current[ind] <- n_current[ind] -1
+          flag_2 <- 1
+          npj <- counts_by_rec[[j]][pattern]
+          while(flag_2 == 1){
+            index <- ceiling(runif(1) * npj)
+            i <- hash_to_file_1[[j]][[pattern]][index]
+            if(Z_inv[i] == 0){
+              Z[j] <- i
+              Z_pattern[j] <- pattern
+              flag_2 <- 0
             }
           }
-          temp_weights <- n_current * unique_weights
-          probs <- c((n1 - L) * (n2 - L - 1 + beta) / (L + alpha),
-                     temp_weights)
+        }
+      }
+      else if(mode == "rejection"){
+        hash_weights <- counts_by_rec[[j]] * unique_weights
+        probs <- c(empty_weight, hash_weights)
+        flag <- 1
+        iter <- 0
+        while(flag == 1){
           pattern <- sample(candidates_P, 1, prob = probs)
           if(pattern == 0){
             Z[j] <- 0
+            Z_pattern[j] <- 0
+            flag <- 0
           }
           else{
-            flag_2 <- 1
-            npj <- counts_by_rec[[j]][pattern]
-            while(flag_2 == 1){
-              index <- ceiling(runif(1) * npj)
-              i <- hash_to_file_1[[j]][[pattern]][index]
-              if(Z_inv[i] == 0){
-                Z[j] <- i
-                flag_2 <- 0
-              }
+            index <- ceiling(runif(1) * counts_by_rec[[j]][pattern])
+            i <- hash_to_file_1[[j]][[pattern]][index]
+            if(Z_inv[i] == 0){
+              Z[j] <- i
+              Z_pattern[j] <- pattern
+              flag <- 0
             }
           }
+          iter <- iter + 1
+          if(iter == reject_iter){
 
+            # O(n1)
+            available <- which(Z_inv == 0)
+            temp_weights <- c(empty_weight, unique_weights[pair_to_pattern[[j]][available]])
 
-          flag <- 0
+            Z[j] <- sample(c(0, available), 1, prob = temp_weights)
+            if(Z[j] > 0){
+              Z_pattern[j] <- pair_to_pattern[[j]][Z[j]]
+            }
+            else{
+              Z_pattern[j] <- 0
+            }
+
+            # O(n2 + P)
+            # n_current <- counts_by_rec[[j]]
+            # for(k in 1:n2){
+            #   if(Z[k] > 0){
+            #     ind <- pair_to_pattern[[j]][Z[k]]
+            #     n_current[ind] <- n_current[ind] - 1
+            #   }
+            # }
+            # temp_weights <- n_current * unique_weights
+            # probs <- c(empty_weight, temp_weights)
+            # pattern <- sample(candidates_P, 1, prob = probs)
+            # if(pattern == 0){
+            #   Z[j] <- 0
+            #   Z_pattern[j] <- 0
+            # }
+            # else{
+            #   flag_2 <- 1
+            #   npj <- counts_by_rec[[j]][pattern]
+            #   while(flag_2 == 1){
+            #     index <- ceiling(runif(1) * npj)
+            #     i <- hash_to_file_1[[j]][[pattern]][index]
+            #     if(Z_inv[i] == 0){
+            #       Z[j] <- i
+            #       Z_pattern[j] <- pattern
+            #       flag_2 <- 0
+            #     }
+            #   }
+            # }
+            flag <- 0
+          }
         }
       }
-
 
       if(Z[j] > 0){
         L <- L + 1
@@ -188,17 +242,6 @@ brl_efficient_serge <- function(hash, m_prior = 1, u_prior = 1,
       }
     }
   }
-
-  # final_gibbs <- apply(Z.SAMPS, 2, function(z){
-  #   purrr::imap(z, ~ if(.x == 0) {
-  #     return(0)
-  #     } else {
-  #     sample_with_1(hash_to_file_1[[.y]][[.x]], 1)
-  #     }) %>%
-  #     unlist()
-  # })
-
-  #final_gibbs[final_gibbs == 0] <- n1 + 1
 
   Z.SAMPS[Z.SAMPS == 0] <- n1 + 1
 
