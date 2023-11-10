@@ -2,9 +2,9 @@
 #'
 #' @export
 
-svi_efficient <- function(hash, threshold = 1e-5, tmax = 1000, fixed_iterations = NULL,
-                           b_init = TRUE, B = min(1000, hash$n2), holdout_size = min(1000, hash$n2),
-                          k = 1, tau = 1, seed = 0, fixed_u = T){
+svi_efficient2 <- function(hash, threshold = 1e-5, tmax = 1000, fixed_iterations = NULL,
+                           b_init = TRUE, B = min(1000, hash$n2),
+                          k = 1, tau = 1, seed = 0, fixed_u = F){
 
   set.seed(seed)
   check_every <- 10
@@ -118,9 +118,8 @@ svi_efficient <- function(hash, threshold = 1e-5, tmax = 1000, fixed_iterations 
       epsilon * (beta_pi + total_nonmatch)
 
     # ELBO
+    if(t %% check_every == 0 | t == 1){
     elbo_pieces <- vector(length = 6)
-
-
     C_full <- sapply(1:n2, function(x){
       pattern_counts_by_record[[x]] %*% phi + single
     })
@@ -160,12 +159,14 @@ svi_efficient <- function(hash, threshold = 1e-5, tmax = 1000, fixed_iterations 
     elbo_pieces[6] <- sum((alpha - a) * a_chunk + (Beta - b) * b_chunk)
     elbo <- sum(elbo_pieces)
     elbo_seq <- c(elbo_seq, elbo)
+    }
 
 
     if(is.null(fixed_iterations)){
       if(t %% check_every == 0){
-        ratio <- abs((elbo_seq[t] - elbo_seq[t - check_every +1])/
-                       elbo_seq[t - check_every +1])
+        t_elbo <- length(elbo_seq)
+        ratio <- abs((elbo_seq[t_elbo] - elbo_seq[t_elbo - 1])/
+                       elbo_seq[t_elbo - 1])
       }
       if(ratio < threshold){
         break

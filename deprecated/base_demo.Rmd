@@ -31,6 +31,15 @@ show_progress <- T
 fast = F
 R <- NULL
 all_patterns <- FALSE
+threshold = 1e-5
+tmax = 1000
+fixed_iterations = NULL
+b_init = TRUE
+B = min(1000, hash$n2)
+k = 1
+tau = 1
+seed = 0
+fixed_u = F
 
 m <- c(.05, .95, .05, .95, .05, .95, .05, .95, .05, .95)
 
@@ -72,7 +81,17 @@ elbo_vi <- data.frame(elbo = out$elbo_seq,
                       iter = 1:out$t, 
                       method = "vi")
 
-out <- svi_efficient(hash, B = 100, holdout_size = 100, k = 1, seed = 42)
+out <- svi_efficient(hash, B = 10, holdout_size = 100, k = 1, seed = 42)
+results <- vi_estimate_links(out, hash)
+evaluate_links(results$Z_hat, Ztrue, n1)
+out$t
+elbo_svi <- data.frame(elbo = out$elbo_seq,
+                      iter = seq_along(out$elbo_seq), 
+                      method = "svi")
+
+elbo_df <- rbind(elbo_vi, elbo_svi)
+
+out <- fabldev:::svi_efficient2(hash, B = 10, holdout_size = 100, k = 1, seed = 42)
 results <- vi_estimate_links(out, hash)
 evaluate_links(results$Z_hat, Ztrue, n1)
 out$t
