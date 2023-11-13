@@ -134,26 +134,15 @@ psis_vabl <- function(hash, out, num_samp, seed = 42){
 
 
 num_samp <- 10000
-log_ratios <- psis_vabl(hash = hash, out = out, num_samp = num_samp, seed = 43)
+log_ratios <- psis_vabl(hash = hash, out = out, num_samp = num_samp, seed = 42)
 hist(log_ratios)
 hist(log_ratios - max(log_ratios))
 out$elbo_seq
 mean(log_ratios)
-# diagnostic <- loo::psis(log_ratios = log_ratios, r_eff = NA)
-# diagnostic
-# diagnostic$diagnostic$pareto_k
 
-# Was getting weird results for febrl when using the psis function
-# I know the issue (has to do with a cutoff), so using an older version that
-# uses a different cutoff
-M <- ceiling(min(num_samp / 5, 3 * sqrt(num_samp)))
-k <- loo:::psislw(log_ratios, wcp = M / num_samp)$pareto_k
-
-
-log_ratios <- psis_vabl(hash = hash, out = out, num_samp = 100000 * 100, seed = 42)
-khats <- rep(0, 20)
-for(j in 1:20){
-  khats[j] <- loo::psis(log_ratios = log_ratios[(500000 * (j-1) + 1):(500000 * j)],
-                        r_eff = NA)$diagnostic$pareto_k
+diagnostic <- loo::psis(log_ratios = log_ratios, r_eff = NA)
+k <- diagnostic$diagnostic$pareto_k
+if(is.na(diagnostic$diagnostic$pareto_k)){
+  M <- ceiling(min(num_samp / 5, 3 * sqrt(num_samp)))
+  k <- loo:::psislw(log_ratios, wcp = M / num_samp)$pareto_k
 }
-hist(khats)
