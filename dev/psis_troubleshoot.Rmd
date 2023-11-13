@@ -17,10 +17,13 @@ knitr::opts_chunk$set(
 ```{r setup}
 library(fabldev)
 library(ggplot2)
+library(glue)
+library(tictoc)
 ```
 
 
 ```{r}
+set.seed(42)
 n1 <- 50
 n2 <- 50
 overlap <- n2/2
@@ -55,6 +58,31 @@ evaluate_links(results$Z_hat, Ztrue, n1)
 chain <- gibbs_efficient(hash)
 results_fabl <- estimate_links(chain$Z, n1)
 eval_fabl <- evaluate_links(results_fabl$Z_hat, Ztrue, n1)
+```
+
+```{r}
+df1 <- read.csv("../aistats24-code/data/febrl_4_B.csv") %>%
+  arrange(rec_id) %>%
+  mutate(rec_id = row_number())
+df2 <- read.csv("../aistats24-code/data/febrl_4_B.csv") %>%
+  arrange(rec_id) %>%
+  mutate(rec_id = row_number())
+
+n1 <- nrow(df1)
+n2 <- nrow(df2)
+
+Z_true <- seq(1:5000)
+fields <- c(2, 3, 8, 10, 11)
+types <- c("lv", "lv","bi", "bi", "bi")
+
+cd <- compare_records(df1, df2, flds = fields, types = types,
+                      breaks = c(0, .15))
+
+hash <- hash_comparisons(cd, all_patterns = F)
+
+out <- vi_efficient(hash)
+results <- vi_estimate_links(out, hash)
+evaluate_links(results$Z_hat, Z_true, n1)
 ```
 
 

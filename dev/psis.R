@@ -10,6 +10,7 @@ psis_vabl <- function(hash, out, num_samp, seed = 42){
   alpha_pi <- 1
   beta_pi <- 1
   phis <- c(out$pattern_weights, exp(digamma(out$b_pi)))
+  log_phis <- log(phis)
   n2 <- hash$n2
   n1 <- hash$n1
   P <- nrow(hash$ohe)
@@ -42,42 +43,58 @@ psis_vabl <- function(hash, out, num_samp, seed = 42){
 
   Phi_sum <- sum(log(out$C))
 
-  log_ratios <- rep(0, num_samp)
-
   set.seed(seed)
+
+  log_ms <- log(replicate(num_samp, as.vector(unlist(sapply(a_split, function(x){
+    MCMCpack::rdirichlet(1, x)
+  })))))
+  log_us <- log(replicate(num_samp, as.vector(unlist(sapply(b_split, function(x){
+    MCMCpack::rdirichlet(1, x)
+  })))))
+  log_m_ps <- ohe %*% log_ms
+  log_u_ps <- ohe %*% log_us
+
+  pis <- rbeta(num_samp, a_pi, b_pi)
+
+  xis <- replicate(num_samp, sapply(1:n2, function(j){
+    sample(1:(P+1), 1, F, pattern_probs[[j]])
+  }))
+  n_p_xis <- apply(xis, 2, function(x){
+    tabulate(bin = x, nbin = P + 1)[-(P + 1)]
+  })
+
+  log_ratios <- rep(0, num_samp)
 
   for(i in 1:num_samp){
     # Sample parameters
-    m <- as.vector(unlist(sapply(a_split, function(x){
-      prob <- MCMCpack::rdirichlet(1, x)
-      prob/sum(prob)
-    })))
 
-    u <- as.vector(unlist(sapply(b_split, function(x){
-      prob <- MCMCpack::rdirichlet(1, x)
-      prob/sum(prob)
-    })))
+    # m <- as.vector(unlist(sapply(a_split, function(x){
+    #   MCMCpack::rdirichlet(1, x)
+    # })))
+    #
+    # u <- as.vector(unlist(sapply(b_split, function(x){
+    #   MCMCpack::rdirichlet(1, x)
+    # })))
 
-    pi <- rbeta(1, a_pi, b_pi)
+    log_m <- log_ms[, i]
+    log_u <- log_us[, i]
 
-    log_m_p <- ohe %>%
-      sweep(., 2, log(m), "*") %>%
-      rowSums()
+    log_m_p <- log_m_ps[, i]
+    log_u_p <- log_u_ps[, i]
 
-    log_u_p <- ohe %>%
-      sweep(., 2, log(u), "*") %>%
-      rowSums()
+    pi <- pis[i]
 
+    # xi <- sapply(1:n2, function(j){
+    #   sample(1:(P+1), 1, F, pattern_probs[[j]])
+    # })
 
-    xi <- sapply(1:n2, function(j){
-      sample(1:(P+1), 1, F, pattern_probs[[j]])
-    })
-
-    n_p_xi <- xi %>%
-      factor(., 1:(P+1), 1:(P+1)) %>%
-      table() %>%
-      .[-(P+1)] %>%
-      as.numeric()
+    xi <- xis[, i]
+    # n_p_xi <- xi %>%
+    #   factor(., 1:(P+1), 1:(P+1)) %>%
+    #   table() %>%
+    #   .[-(P+1)] %>%
+    #   as.numeric()
+    n_p_xi <- n_p_xis[, i]
 
     n_12_xi <- sum(n_p_xi)
 
@@ -102,25 +119,36 @@ psis_vabl <- function(hash, out, num_samp, seed = 42){
     #   # Phi_sum
     log_ratios[i] <- sum(n_p_xi * log_m_p) +
       sum((N_p - n_p_xi) * log_u_p) +
-      sum((alpha - a) * log(m)) +
-      sum((beta - b) * log(u)) +
+      sum((alpha - a) * log_m) +
+      sum((beta - b) * log_u) +
       beta_funs_mu +
       (alpha_pi - a_pi + n_12_xi) * log(pi) +
       (beta_pi - b_pi + n2 - n_12_xi)  * log(1 - pi) +
       beta_funs_pi -
       n_12_xi * log(n1) -
-      sum(log(phis)[xi]) + Phi_sum
+      sum(log_phis[xi]) + Phi_sum
   }
 
   return(log_ratios)
 }
 
-log_ratios <- psis_vabl(hash = hash, out = out, num_samp = 100000, seed = 42)
+
+num_samp <- 10000
+log_ratios <- psis_vabl(hash = hash, out = out, num_samp = num_samp, seed = 43)
+hist(log_ratios)
+hist(log_ratios - max(log_ratios))
 out$elbo_seq
 mean(log_ratios)
-diagnostic <- loo::psis(log_ratios = log_ratios, r_eff = NA)
-diagnostic
-diagnostic$diagnostic$pareto_k
+# diagnostic <- loo::psis(log_ratios = log_ratios, r_eff = NA)
+# diagnostic
+# diagnostic$diagnostic$pareto_k
+
+# Was getting weird results for febrl when using the psis function
+# I know the issue (has to do with a cutoff), so using an older version that
+# uses a different cutoff
+M <- ceiling(min(num_samp / 5, 3 * sqrt(num_samp)))
+k <- loo:::psislw(log_ratios, wcp = M / num_samp)$pareto_k
+
 
 log_ratios <- psis_vabl(hash = hash, out = out, num_samp = 100000 * 100, seed = 42)
 khats <- rep(0, 20)
