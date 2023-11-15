@@ -54,3 +54,5 @@ holdout_size <- 1000
 tau <-  1
 
 svi_efficient(hash, k = 1, B = 1000)
+
+chain <- brl_efficient_serge(hash, S = 50)
