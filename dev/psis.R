@@ -1,82 +1,109 @@
-
 multivar_beta <- function(x){
     sum(lgamma(x)) - lgamma(sum(x))
 }
-samps <- 50
-alpha <- rep(1, ncol(hash$ohe))
-beta <- rep(1, ncol(hash$ohe))
-alpha_pi <- 1
-beta_pi <- 1
-phis <- c(out$pattern_weights, exp(digamma(out$b_pi)))
-n2 <- hash$n2
-n1 <- hash$n1
-P <- nrow(hash$ohe)
-field_marker <- hash$field_marker
-ohe <- hash$ohe
-pattern_probs <- lapply(1:n2, function(j){
-  c(out$pattern_weights * hash$pattern_counts_by_record[[j]],
-    exp(digamma(out$b_pi))) / out$C[j]
-})
 
-N_p <- hash$total_counts
+psis_vabl <- function(hash, out, num_samp, seed = 42){
 
-a <- out$a
-b <- out$b
-a_split <- split(a, field_marker)
-b_split <- split(b, field_marker)
-a_pi <- out$a_pi
-b_pi <- out$b_pi
+  # Get prior information and variational estimates
+  alpha <- rep(1, ncol(hash$ohe))
+  beta <- rep(1, ncol(hash$ohe))
+  alpha_pi <- 1
+  beta_pi <- 1
+  phis <- c(out$pattern_weights, exp(digamma(out$b_pi)))
+  log_phis <- log(phis)
+  n2 <- hash$n2
+  n1 <- hash$n1
+  P <- nrow(hash$ohe)
+  field_marker <- hash$field_marker
+  ohe <- hash$ohe
+  pattern_probs <- lapply(1:n2, function(j){
+    c(out$pattern_weights * hash$pattern_counts_by_record[[j]],
+      exp(digamma(out$b_pi))) / out$C[j]
+  })
 
-alpha_split <- split(alpha, field_marker)
-beta_split <- split(beta, field_marker)
+  N_p <- hash$total_counts
 
-# Try seeds 42-44
-set.seed(42)
-khats <- rep(0, 100)
-for(j in 1:100){
-  print(j)
-  log_ratios <- rep(0, 5000)
+  a <- out$a
+  b <- out$b
+  a_split <- split(a, field_marker)
+  b_split <- split(b, field_marker)
+  a_pi <- out$a_pi
+  b_pi <- out$b_pi
+  alpha_split <- split(alpha, field_marker)
+  beta_split <- split(beta, field_marker)
 
-  for(i in 1:5000){
-    # fabl parameters
-    m <- as.vector(unlist(sapply(a_split, function(x){
-      prob <- MCMCpack::rdirichlet(1, x)
-      prob/sum(prob)
-    })))
+  # Pre-compute reusable things
+  beta_funs_mu <- sum(sapply(a_split, multivar_beta)) +
+    sum(sapply(b_split, multivar_beta)) -
+    sum(sapply(alpha_split, multivar_beta)) -
+    sum(sapply(beta_split, multivar_beta))
 
-    u <- as.vector(unlist(sapply(b_split, function(x){
-      prob <- MCMCpack::rdirichlet(1, x)
-      prob/sum(prob)
-    })))
+  beta_funs_pi <- lbeta(a_pi, b_pi) -
+    lbeta(alpha_pi, beta_pi)
 
-    pi <- rbeta(1, a_pi, b_pi)
+  Phi_sum <- sum(log(out$C))
 
-    log_m_p <- ohe %>%
-      sweep(., 2, log(m), "*") %>%
-      rowSums()
+  set.seed(seed)
 
-    log_u_p <- ohe %>%
-      sweep(., 2, log(u), "*") %>%
-      rowSums()
+  log_ms <- log(replicate(num_samp, as.vector(unlist(sapply(a_split, function(x){
+    MCMCpack::rdirichlet(1, x)
+  })))))
+  log_us <- log(replicate(num_samp, as.vector(unlist(sapply(b_split, function(x){
+    MCMCpack::rdirichlet(1, x)
+  })))))
+  log_m_ps <- ohe %*% log_ms
+  log_u_ps <- ohe %*% log_us
 
+  pis <- rbeta(num_samp, a_pi, b_pi)
 
-    xi <- sapply(1:n2, function(j){
-      sample(1:(P+1), 1, F, pattern_probs[[j]])
-    })
+  xis <- replicate(num_samp, sapply(1:n2, function(j){
+    sample(1:(P+1), 1, F, pattern_probs[[j]])
+  }))
+  n_p_xis <- apply(xis, 2, function(x){
+    tabulate(bin = x, nbin = P + 1)[-(P + 1)]
+  })
 
-    n_p_xi <- xi %>%
-      factor(., 1:(P+1), 1:(P+1)) %>%
-      table() %>%
-      .[-(P+1)] %>%
-      as.numeric()
+  log_ratios <- rep(0, num_samp)
+
+  for(i in 1:num_samp){
+    # Sample parameters
+
+    # m <- as.vector(unlist(sapply(a_split, function(x){
+    #   MCMCpack::rdirichlet(1, x)
+    # })))
+    #
+    # u <- as.vector(unlist(sapply(b_split, function(x){
+    #   MCMCpack::rdirichlet(1, x)
+    # })))
+
+    log_m <- log_ms[, i]
+    log_u <- log_us[, i]
+
+    log_m_p <- log_m_ps[, i]
+    log_u_p <- log_u_ps[, i]
+
+    pi <- pis[i]
+
+    # xi <- sapply(1:n2, function(j){
+    #   sample(1:(P+1), 1, F, pattern_probs[[j]])
+    # })
+
+    xi <- xis[, i]
+    # n_p_xi <- xi %>%
+    #   factor(., 1:(P+1), 1:(P+1)) %>%
+    #   table() %>%
+    #   .[-(P+1)] %>%
+    #   as.numeric()
+    n_p_xi <- n_p_xis[, i]
 
     n_12_xi <- sum(n_p_xi)
 
-    #importance ratio
-    # log_ratio <- sum(n_p_xi * log_m_p) +
+    # Compute log ratio
+    # log_ratios[i] <- sum(n_p_xi * log_m_p) +
     #   sum((N_p - n_p_xi) * log_u_p) +
     #   sum((alpha - a) * log(m)) +
     #   sum((beta - b) * log(u)) +
+    #   # beta_funs_mu +
     #   sum(sapply(a_split, multivar_beta)) +
     #   sum(sapply(b_split, multivar_beta)) -
     #   sum(sapply(alpha_split, multivar_beta)) -
@@ -85,86 +112,37 @@ for(j in 1:100){
     #   (beta_pi - b_pi + n2 - n_12_xi)  * log(1 - pi) +
     #   lbeta(a_pi, b_pi) -
     #   lbeta(alpha_pi, beta_pi) -
+    #   # beta_funs_pi -
     #   n_12_xi * log(n1) -
-    #   sum(log(phis)[xi] - log(out$C)) #x_j = 0 is coded as P+1
-    #
-    # ratio <- exp(log_ratio)
-
-    log_joint <- sum(n_p_xi * log_m_p) +
+    #   sum(log(phis)[xi]) -
+    #   sum(log(out$C))
+    #   # Phi_sum
+    log_ratios[i] <- sum(n_p_xi * log_m_p) +
       sum((N_p - n_p_xi) * log_u_p) +
-      sum((alpha - 1) * log(m)) +
-      sum((beta - 1) * log(u)) -
-      sum(sapply(alpha_split, multivar_beta)) -
-      sum(sapply(beta_split, multivar_beta)) +
-      (alpha_pi - 1 + n_12_xi) * log(pi) +
-      (beta_pi - 1 + n2 - n_12_xi)  * log(1 - pi) -
-      lbeta(alpha_pi, beta_pi) -
-      n_12_xi * log(n1)
-
-    log_var <- sum((a - 1) * log(m)) +
-      sum((b - 1) * log(u)) -
-      sum(sapply(a_split, multivar_beta)) -
-      sum(sapply(b_split, multivar_beta)) +
-      (a_pi - 1) * log(pi) +
-      (b_pi - 1) * log(1 - pi) -
-      lbeta(a_pi, b_pi) +
-      (n2 - n_12_xi) * digamma(b_pi) +
-      sum(n_p_xi * log(out$pattern_weights)) -
-      sum(log(out$C))
-
-    log_ratios[i] <- log_joint - log_var
+      sum((alpha - a) * log_m) +
+      sum((beta - b) * log_u) +
+      beta_funs_mu +
+      (alpha_pi - a_pi + n_12_xi) * log(pi) +
+      (beta_pi - b_pi + n2 - n_12_xi)  * log(1 - pi) +
+      beta_funs_pi -
+      n_12_xi * log(n1) -
+      sum(log_phis[xi]) + Phi_sum
   }
 
-  out$elbo_seq
-  mean(log_ratios)
-
-  diagnostic <- loo::psis(log_ratios = log_ratios, r_eff = NA)
-  #diagnostic
-  khats[j] <- diagnostic$diagnostic$pareto_k
+  return(log_ratios)
 }
-hist(khats)
 
 
+num_samp <- 10000
+log_ratios <- psis_vabl(hash = hash, out = out, num_samp = num_samp, seed = 42)
+hist(log_ratios)
+hist(log_ratios - max(log_ratios))
+out$elbo_seq
+mean(log_ratios)
 
-
-# m <- a %>%
-#   split(., field_marker) %>%
-#   lapply(., function(x){
-#     x/sum(x)
-#   }) %>%
-#   unlist() %>%
-#   log()
-#
-# u <- b %>%
-#   split(., field_marker)%>%
-#   lapply(., function(x){
-#     x/sum(x)
-#   }) %>%
-#   unlist() %>%
-#   log()
-
-# xi_samps <- lapply(seq_len(samps), function(x){
-#   xi <- sapply(1:n2, function(j){
-#     sample(1:(P+1), 1, F, pattern_probs[[j]])
-#   })
-#   xi
-# })
-#
-#
-# sapply(list(a, b), function(y){
-#   split(y, field_marker) %>%
-#     sapply(., function(x){
-#       sum(lgamma(x)) - lgamma(sum(x))
-#     })%>%
-#     sum(.)
-# }) %>%
-#   sum(.) -
-#
-#   sapply(list(alpha, beta), function(y){
-#     split(y, field_marker) %>%
-#       sapply(., function(x){
-#         sum(lgamma(x)) - lgamma(sum(x))
-#       })%>%
-#       sum(.)
-#   }) %>%
-#   sum(.) +
+diagnostic <- loo::psis(log_ratios = log_ratios, r_eff = NA)
+k <- diagnostic$diagnostic$pareto_k
+if(is.na(diagnostic$diagnostic$pareto_k)){
+  M <- ceiling(min(num_samp / 5, 3 * sqrt(num_samp)))
+  k <- loo:::psislw(log_ratios, wcp = M / num_samp)$pareto_k
+}
