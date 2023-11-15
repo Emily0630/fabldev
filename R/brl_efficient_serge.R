@@ -18,7 +18,7 @@
 brl_efficient_serge <- function(hash, m_prior = 1, u_prior = 1,
                           alpha = 1, beta = 1, S = 1000, burn = round(S * .1),
                           show_progress = T, seed = 0, reject_iter = round(hash$n2/length(hash$total_counts)),
-                          mode = "rejection"){
+                          mode = "efficient"){
   # Implements bipartite record linkage with BK Sampling Mechanism
   #
   # Arguments
