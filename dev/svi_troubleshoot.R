@@ -1,6 +1,7 @@
 library(RecordLinkage)
 library(glue)
 library(tictoc)
+library(fabldev)
 
 data <- RecordLinkage::RLdata10000 %>%
   mutate(unique_id = RecordLinkage::identity.RLdata10000)
@@ -55,4 +56,4 @@ tau <-  1
 
 svi_efficient(hash, k = 1, B = 1000)
 
-chain <- brl_efficient_serge(hash, S = 50)
+chain <- brl_efficient_serge(hash, S = 50, mode = "rejection")
