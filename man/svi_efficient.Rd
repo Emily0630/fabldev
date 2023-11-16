@@ -11,11 +11,10 @@ svi_efficient(
   fixed_iterations = NULL,
   b_init = TRUE,
   B = min(1000, hash$n2),
-  holdout_size = min(1000, hash$n2),
   k = 1,
   tau = 1,
   seed = 0,
-  fixed_u = T
+  fixed_u = F
 )
 }
 \description{
