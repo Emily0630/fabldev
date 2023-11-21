@@ -2,7 +2,8 @@
 #'
 #' @export
 
-simulate_comparisons <- function(m, u, levels, n1, n2, overlap){
+simulate_comparisons <- function(m, u, levels, n1, n2, overlap,
+                                 previous_matches = 0){
   field_marker <- unlist(lapply(1:length(levels), function(x){
     rep(x, levels[x])
   }))
@@ -11,12 +12,13 @@ simulate_comparisons <- function(m, u, levels, n1, n2, overlap){
   ids <- expand.grid(1:n1, 1:n2)
   indicators <- matrix(NA, nrow = N, ncol = length(levels))
 
-  df1matches <- df2matches <- seq_len(overlap)
+  df2matches <- seq_len(overlap)
+  df1matches <- df2matches + previous_matches
 
   Ztrue <- rep(n1 + 1, n2)
   Ztrue[df2matches] <- df1matches
 
-  match_index <- which(ids[,1] == ids[,2])[seq_len(overlap)]
+  match_index <- which(ids[,1]  == (ids[,2]+ previous_matches))[seq_len(overlap)]
 
   m_list <- split(m, field_marker)
   u_list <- split(u, field_marker)

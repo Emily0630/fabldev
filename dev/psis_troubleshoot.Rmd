@@ -47,7 +47,7 @@ S <- 1000; burn <- S * .1
 m_prior <- u_prior <- rep(1, length(m))
 alpha <- beta <- 1
 
-cd <- simulate_comparisons(m, u, levels, n1, n2, overlap)
+cd <- simulate_comparisons(m, u, levels, n1, n2, overlap, previous_matches = 5)
 hash <- hash_comparisons(cd)
 Ztrue <- cd$Ztrue
 
@@ -56,7 +56,7 @@ results <- vi_estimate_links(out, hash)
 evaluate_links(results$Z_hat, Ztrue, n1)
 
 
-chain <- gibbs_efficient(hash)
+chain <- gibbs_efficient_brian(hash)
 results_fabl <- estimate_links(chain$Z, n1)
 eval_fabl <- evaluate_links(results_fabl$Z_hat, Ztrue, n1)
 ```

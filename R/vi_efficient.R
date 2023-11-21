@@ -1,4 +1,4 @@
-vi_efficient <- function(hash, threshold = 1e-5, tmax = 1000, fixed_iterations = NULL,
+vi_efficient <- function(hash, threshold = 1e-6, tmax = 1000, fixed_iterations = NULL,
                            b_init = TRUE){
 
   check_every <- 10

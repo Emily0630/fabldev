@@ -6,7 +6,7 @@
 \usage{
 svi_efficient(
   hash,
-  threshold = 1e-05,
+  threshold = 1e-06,
   tmax = 1000,
   fixed_iterations = NULL,
   b_init = TRUE,

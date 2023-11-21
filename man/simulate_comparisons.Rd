@@ -4,7 +4,7 @@
 \alias{simulate_comparisons}
 \title{Simulate comparison Vectors}
 \usage{
-simulate_comparisons(m, u, levels, n1, n2, overlap)
+simulate_comparisons(m, u, levels, n1, n2, overlap, previous_matches = 0)
 }
 \description{
 Simulate comparison Vectors
