@@ -93,6 +93,7 @@ vi_efficient <- function(hash, threshold = 1e-6, tmax = 1000, fixed_iterations =
     b_pi <- beta_pi + total_nonmatch
 
     # ELBO
+    if(t %% check_every == 0 | t == 1){
     elbo_pieces <- vector(length = 6)
     elbo_pieces[1] <- sapply(1:n2, function(j){
       sum(pattern_counts_by_record[[j]] * (phi *(weights - log(phi) + log(C[j]))/ C[j] +
@@ -127,12 +128,24 @@ vi_efficient <- function(hash, threshold = 1e-6, tmax = 1000, fixed_iterations =
     elbo_pieces[6] <- sum((alpha - a) * a_chunk + (Beta - b) * b_chunk)
     elbo <- sum(elbo_pieces)
     elbo_seq <- c(elbo_seq, elbo)
+    }
 
+
+    # if(is.null(fixed_iterations)){
+    #   if(t %% check_every == 0){
+    #     ratio <- abs((elbo_seq[t] - elbo_seq[t - check_every +1])/
+    #                    elbo_seq[t - check_every +1])
+    #   }
+    #   if(ratio < threshold){
+    #     break
+    #   }
+    # }
 
     if(is.null(fixed_iterations)){
       if(t %% check_every == 0){
-        ratio <- abs((elbo_seq[t] - elbo_seq[t - check_every +1])/
-                       elbo_seq[t - check_every +1])
+        t_elbo <- length(elbo_seq)
+        ratio <- abs((elbo_seq[t_elbo] - elbo_seq[t_elbo - 1])/
+                       elbo_seq[t_elbo - 1])
       }
       if(ratio < threshold){
         break
