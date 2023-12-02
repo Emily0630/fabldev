@@ -2,7 +2,7 @@
 #'
 hash_comparisons <- function(cd,
          method = "both", R = NULL,
-         all_patterns = FALSE){
+         all_patterns = FALSE, store_pair_to_pattern = TRUE){
 
 
   indicators <- cd[[1]]
@@ -60,11 +60,16 @@ hash_comparisons <- function(cd,
     data.frame() %>%
     setNames(., c("hash_id", "rec2"))
 
+  pair_to_pattern <- NULL
+
+  if(store_pair_to_pattern == TRUE){
+
   pair_to_pattern <- temp %>%
     select(hash_id, rec2) %>%
     group_split(rec2, .keep = F) %>%
     lapply(., pull) %>%
     lapply(., as.double)
+  }
 
   hash_to_file_1 <- temp %>%
     select(rec1, rec2, hash_id) %>%

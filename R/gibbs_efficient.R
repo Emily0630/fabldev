@@ -89,7 +89,8 @@ gibbs_efficient <- function(hash, m_prior = 1, u_prior = 1,
       Z[j] <- sample(candidates_P, 1,
                      prob = c(1 - pi, hash_weights[[j]] * pi / n1))
       if(Z[j] > 0){
-        index <- ceiling(runif(1) * counts_by_rec[[j]][Z[j]])
+        #index <- ceiling(runif(1) * counts_by_rec[[j]][Z[j]]) #Causes issue with SEI
+        index <- ceiling(runif(1) * length(hash_to_file_1[[j]][[Z[j]]]))
         Z.SAMPS[j, s] <- hash_to_file_1[[j]][[Z[j]]][index]
         L <- L + 1
       }
