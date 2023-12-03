@@ -48,7 +48,7 @@ u <- c(.99, .01, .99, .01,
 
 levels <- c(2, 2, 2, 2, 2)
 
-S <- 1000; burn <- S * .1
+S <- 100; burn <- S * .1
 m_prior <- u_prior <- rep(1, length(m))
 alpha <- beta <- 1
 
@@ -117,4 +117,50 @@ elbo_df %>%
 ```
 
 
+```{r}
+Z_chain <- chain$Z
+names(thing[thing>threshold]) %>% 
+
+threshold <- .5
+samps <- ncol(Z_chain)
+probs <- apply(Z_chain, 1, function(x){
+  table(x)/samps
+})
+probNoLink <- sapply(probs, function(x){
+  1 - sum(x[names(x) != n1 + 1])
+})
+Z_hat <- rep(0, n2)
+maxProbOption <- sapply(probs, function(x){
+  names(which.max(x))
+}) %>% 
+  as.numeric()
+probmaxProbOption <- sapply(probs, function(x){
+  max(x)
+})
+maxProbOptionIsLink <- maxProbOption < n1 + 1
+
+Z_hat[probmaxProbOption > threshold] <- maxProbOption[probmaxProbOption > threshold]
+
+  if (resolve == T){
+
+    double_matches <- Z_hat[duplicated(Z_hat) & Z_hat > 0]
+    if (lR == Inf){
+      to_resolve <- unlist(lapply(double_matches, function(x){
+        dfB_options <- which(Z_hat == x)
+        dfB_probs <- probMaxProbOption[dfB_options]
+        non_matches <- dfB_options[-which.max(dfB_probs)]
+        non_matches
+      }))
+      Z_hat[to_resolve] <- 0
+    } else {
+      to_resolve <- unlist(lapply(double_matches, function(x){
+        dfB_options <- which(Z_hat == x)
+        dfB_options
+      }))
+      Z_hat[to_resolve] <- -1
+    }
+  }
+
+
+```
 

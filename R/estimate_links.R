@@ -1,7 +1,8 @@
 #' @export
 #'
 estimate_links<- function(Z_samps, n1, lFNM=1, lFM1=1, lFM2=2, lR=Inf,
-                          nonmatch = "BK", matching = "single", resolve = T){
+                          nonmatch = "BK", matching = "single", resolve = T,
+                          edition = "new"){
   #
   # Adapted from BRL::linkrecords. See https://CRAN.R-project.org/package=BRL
   #
@@ -27,6 +28,7 @@ estimate_links<- function(Z_samps, n1, lFNM=1, lFM1=1, lFM2=2, lR=Inf,
 
   # temporarily replace all nonlink labels by n1+1
   #Z_samps[Z_samps > n1+1] <- n1+1
+  if(edition == "old"){
   tableLabels <- apply(Z_samps, 1, tabulate, nbins=max(Z_samps))
   tableLabels <- tableLabels/ncol(Z_samps)
   probNoLink <- tableLabels[n1+1,]
@@ -35,6 +37,26 @@ estimate_links<- function(Z_samps, n1, lFNM=1, lFM1=1, lFM2=2, lR=Inf,
   maxProbOption[maxProbOption==n1+1] <- (n1+1:n2)[maxProbOption==n1+1]
   probMaxProbOption <- apply(tableLabels, 2, max)
   maxProbOptionIsLink <- maxProbOption <= n1
+  }
+
+  if(edition == "new"){
+    samps <- ncol(Z_chain)
+    probs <- apply(Z_chain, 1, function(x){
+      table(x)/samps
+    })
+    probNoLink <- sapply(probs, function(x){
+      1 - sum(x[names(x) != n1 + 1])
+    })
+    Z_hat <- rep(0, n2)
+    maxProbOption <- sapply(probs, function(x){
+      names(which.max(x))
+    }) %>%
+      as.numeric()
+    probMaxProbOption <- sapply(probs, function(x){
+      max(x)
+    })
+    maxProbOptionIsLink <- maxProbOption < n1 + 1
+    }
 
   if(C1){# if not using reject option and conditions of Theorem 1
 
