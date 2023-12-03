@@ -41,7 +41,7 @@ estimate_links<- function(Z_samps, n1, lFNM=1, lFM1=1, lFM2=2, lR=Inf,
 
   if(edition == "new"){
     samps <- ncol(Z_samps)
-    probs <- apply(Z_chain, 1, function(x){
+    probs <- apply(Z_samps, 1, function(x){
       table(x)/samps
     })
     probNoLink <- sapply(probs, function(x){
