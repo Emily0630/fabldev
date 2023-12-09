@@ -1,10 +1,13 @@
 #' @export
 #'
 hash_comparisons <- function(cd,
-         method = "both", R = NULL,
+         method = c("vabl", "fabl", "brl"), R = NULL,
          all_patterns = FALSE, store_pair_to_pattern = TRUE){
 
 
+  if("brl" %in% method){
+    R <- NULL
+  }
   indicators <- cd[[1]]
   N <- dim(indicators)[1]
   n1 <- cd[[2]]
@@ -62,8 +65,7 @@ hash_comparisons <- function(cd,
 
   pair_to_pattern <- NULL
 
-  if(store_pair_to_pattern == TRUE){
-
+  if("brl" %in% method){
   pair_to_pattern <- temp %>%
     select(hash_id, rec2) %>%
     group_split(rec2, .keep = F) %>%
@@ -89,9 +91,17 @@ hash_comparisons <- function(cd,
     group_split(rec2, .keep = F) %>%
     purrr::map(., `[[`, "N")
 
+  record_counts_by_pattern <- NULL
+
+  if("vabl" %in% method){
   record_counts_by_pattern <- purrr::transpose(pattern_counts_by_record) %>%
     purrr::map(unlist) %>%
     purrr::map(unname)
+  }
+
+  flags <- NULL
+
+  if("vabl" %in% method){
 
   flags <- hash_to_file_1 %>%
     filter(N ==1) %>%
@@ -100,12 +110,9 @@ hash_comparisons <- function(cd,
     select(-N) %>%
     setNames(c("rec2", "eligible_patterns", "eligible_records")) %>%
     group_split(rec2, .keep = F)
+  }
 
-  # if(method == "vabl"){
-  #   hash_to_file_1 <- NULL
-  # }
-
-  #if(method == "fabl"){
+  if("fabl" %in% method | "brl" %in% method){
     hash_to_file_1 <- hash_to_file_1 %>%
       group_split(rec2) %>%
       purrr::map(., ~ .x %>%
@@ -117,10 +124,13 @@ hash_comparisons <- function(cd,
       hash_to_file_1 <- lapply(hash_to_file_1, function(z){
         purrr::map(z, ~sei(.x, R))
       })}
-  #  flags <- NULL
-  #}
+  }
 
-    temp
+  if(!("fabl" %in% method) & !("brl" %in% method)){
+    hash_to_file_1 <- NULL
+  }
+
+
 
 
   patterns <- list(ohe = unique_patterns,
