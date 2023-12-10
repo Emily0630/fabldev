@@ -1,8 +1,7 @@
 vi_efficient_mm <- function(hash, threshold = 1e-5, tmax = 1000,
                             fixed_iterations = NULL,
-                           b_init = TRUE, use_elbo = F){
+                           b_init = TRUE, use_elbo = F, check_every = 10){
 
-  check_every <- 10
 
   ohe <- hash$ohe # One-hot encodings e(h_p)
   combo_ohe <- hash$combination_ohe

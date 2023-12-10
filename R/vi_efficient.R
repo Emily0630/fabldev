@@ -1,7 +1,5 @@
 vi_efficient <- function(hash, threshold = 1e-6, tmax = 1000, fixed_iterations = NULL,
-                           b_init = TRUE){
-
-  check_every <- 10
+                           b_init = TRUE, check_every = 10){
 
   ohe <- hash$ohe # One-hot encodings e(h_p)
   P <- dim(ohe)[1]

@@ -6,10 +6,9 @@
 
 svi_efficient <- function(hash, threshold = 1e-6, tmax = 1000, fixed_iterations = NULL,
 b_init = TRUE, B = min(1000, hash$n2),
-k = 1, tau = 1, seed = 0, fixed_u = F){
+k = 1, tau = 1, seed = 0, fixed_u = F, check_every = 10){
 
   set.seed(seed)
-  check_every <- 10
 
   ohe <- hash$ohe # One-hot encodings e(h_p)
   P <- dim(ohe)[1]
