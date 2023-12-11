@@ -1,5 +1,5 @@
 vi_efficient <- function(hash, threshold = 1e-6, tmax = 1000, fixed_iterations = NULL,
-                           b_init = TRUE, check_every = 10){
+                           b_init = TRUE, check_every = 10, store_every = check_every){
 
   ohe <- hash$ohe # One-hot encodings e(h_p)
   P <- dim(ohe)[1]
@@ -91,7 +91,7 @@ vi_efficient <- function(hash, threshold = 1e-6, tmax = 1000, fixed_iterations =
     b_pi <- beta_pi + total_nonmatch
 
     # ELBO
-    if(t %% check_every == 0 | t == 1){
+    if(t %% store_every == 0 | t == 1){
     elbo_pieces <- vector(length = 6)
     elbo_pieces[1] <- sapply(1:n2, function(j){
       sum(pattern_counts_by_record[[j]] * (phi *(weights - log(phi) + log(C[j]))/ C[j] +

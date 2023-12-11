@@ -6,7 +6,7 @@
 
 svi_efficient <- function(hash, threshold = 1e-6, tmax = 1000, fixed_iterations = NULL,
 b_init = TRUE, B = min(1000, hash$n2),
-k = 1, tau = 1, seed = 0, fixed_u = F, check_every = 10){
+k = 1, tau = 1, seed = 0, fixed_u = F, check_every = 10, store_every = check_every){
 
   set.seed(seed)
 
@@ -119,7 +119,7 @@ k = 1, tau = 1, seed = 0, fixed_u = F, check_every = 10){
       epsilon * (beta_pi + total_nonmatch)
 
     # ELBO
-    if(t %% check_every == 0 | t == 1){
+    if(t %% store_every == 0 | t == 1){
       elbo_pieces <- vector(length = 6)
       C_full <- sapply(1:n2, function(x){
         pattern_counts_by_record[[x]] %*% phi + single
