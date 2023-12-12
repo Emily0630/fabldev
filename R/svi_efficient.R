@@ -13,8 +13,9 @@ k = 1, tau = 1, seed = 0, fixed_u = F, check_every = 10, store_every = check_eve
   ohe <- hash$ohe # One-hot encodings e(h_p)
   P <- dim(ohe)[1]
   total_counts <- hash$total_counts #N_p
-  pattern_counts_by_record <- hash$pattern_counts_by_record #N_p_j
-  record_counts_by_pattern <- hash$record_counts_by_pattern
+  # pattern_counts_by_record <- hash$pattern_counts_by_record #N_p_j
+  # record_counts_by_pattern <- hash$record_counts_by_pattern
+  hash_count_table <- hash$hash_count_table
   field_marker <- hash$field_marker
   n1 <- hash$n1
   n2 <- hash$n2
@@ -77,8 +78,8 @@ k = 1, tau = 1, seed = 0, fixed_u = F, check_every = 10, store_every = check_eve
 
     # Phi_j
     batch <- sample(1:n2, B, replace = F)
-    C <- sapply(batch, function(x){
-      pattern_counts_by_record[[x]] %*% phi + single
+    C <- sapply(batch, function(j){
+      hash_count_table[, j] %*% phi + single
     })
 
     # S(Phi, B)
@@ -86,16 +87,16 @@ k = 1, tau = 1, seed = 0, fixed_u = F, check_every = 10, store_every = check_eve
 
     # N_p(B)
     if(fixed_u == F){
-      total_counts <- lapply(batch, function(x){ #This is only in SVI, not standard vabl
-        hash$pattern_counts_by_record[[x]]
+      total_counts <- lapply(batch, function(j){ #This is only in SVI, not standard vabl
+        hash_count_table[, j]
       }) %>%
         do.call(rbind, .) %>%
         colSums() * adjustment
     }
 
     # N_p(Psi, B)
-    K <- sapply(1:P, function(p){ #The "batch" subsetting is only in SVI
-      sum(record_counts_by_pattern[[p]][batch]/C)
+    K <- apply(hash_count_table, 1, function(x){ #The "batch" subsetting is only in SVI
+      sum(x[batch]/C)
     }) * adjustment
 
     epsilon <- (t + tau) ^ (-k)
@@ -121,14 +122,14 @@ k = 1, tau = 1, seed = 0, fixed_u = F, check_every = 10, store_every = check_eve
     # ELBO
     if(t %% store_every == 0 | t == 1){
       elbo_pieces <- vector(length = 6)
-      C_full <- sapply(1:n2, function(x){
-        pattern_counts_by_record[[x]] %*% phi + single
+      C_full <- sapply(1:n2, function(j){
+        hash_count_table[, j] %*% phi + single
       })
 
       full_nonmatch <- sum(single/ C_full)
 
       elbo_pieces[1] <- sapply(1:n2, function(j){
-        sum(pattern_counts_by_record[[j]] * (phi *(weights - log(phi) + log(C_full[j]))/ C_full[j] +
+        sum(hash_count_table[, j] * (phi *(weights - log(phi) + log(C_full[j]))/ C_full[j] +
                                                u_p))
       }) %>%
         sum(.)
@@ -189,8 +190,8 @@ k = 1, tau = 1, seed = 0, fixed_u = F, check_every = 10, store_every = check_eve
 
   }
 
-  C <- sapply(1:n2, function(x){
-    pattern_counts_by_record[[x]] %*% phi + single
+  C <- sapply(1:n2, function(j){
+    hash_count_table[, j] %*% phi + single
   })
 
   list(pattern_weights = phi,

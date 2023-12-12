@@ -80,9 +80,9 @@ elbo_vi <- data.frame(elbo = out$elbo_seq,
                       iter = 1:out$t, 
                       method = "vi")
 
-out <- svi_efficient(hash, B = 10, holdout_size = 100, k = 1, seed = 42)
+out <- svi_efficient(hash, B = 10, k = 1, seed = 42)
 results <- vi_estimate_links(out, hash)
-evaluate_links(results$Z_hat, Ztrue, n1)
+evaluate_links(results$Z_hat, Z_true, n1)
 out$t
 elbo_svi <- data.frame(elbo = out$elbo_seq,
                       iter = seq_along(out$elbo_seq), 
