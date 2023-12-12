@@ -53,11 +53,17 @@ hash_comparisons <- function(cd,
     unique_patterns <- indicators[!duplicated(hash_id), ]
   }
 
-  temp <- data.frame(indicators, rec1, rec2, hash_id)
-  pattern_counts <- temp %>%
-    group_by(hash_id, .drop = F) %>%
+  temp <- data.frame(rec1, rec2, hash_id)
+
+  hash_count_table <- temp %>%
+    group_by(rec2, hash_id, .drop = F) %>%
     count() %>%
-    pull()
+    ungroup() %>%
+    select(n) %>%
+    pull() %>%
+    matrix(., nrow = P, ncol = n2, byrow = F)
+
+  total_counts <- rowSums(hash_count_table)
 
   pattern_lookup <- expand.grid(1:P, 1:n2) %>%
     data.frame() %>%
@@ -70,7 +76,8 @@ hash_comparisons <- function(cd,
     select(hash_id, rec2) %>%
     group_split(rec2, .keep = F) %>%
     lapply(., pull) %>%
-    lapply(., as.double)
+    lapply(., as.double) %>%
+    do.call(cbind, .)
   }
 
   hash_to_file_1 <- temp %>%
@@ -86,18 +93,18 @@ hash_comparisons <- function(cd,
 
   hash_to_file_1$N[is.na(hash_to_file_1$N)] <- 0
 
-  pattern_counts_by_record <- hash_to_file_1 %>%
-    select(-data) %>%
-    group_split(rec2, .keep = F) %>%
-    purrr::map(., `[[`, "N")
-
-  record_counts_by_pattern <- NULL
-
-  if("vabl" %in% method){
-  record_counts_by_pattern <- purrr::transpose(pattern_counts_by_record) %>%
-    purrr::map(unlist) %>%
-    purrr::map(unname)
-  }
+  # pattern_counts_by_record <- hash_to_file_1 %>%
+  #   select(-data) %>%
+  #   group_split(rec2, .keep = F) %>%
+  #   purrr::map(., `[[`, "N")
+#
+#   record_counts_by_pattern <- NULL
+#
+#   if("vabl" %in% method){
+#   record_counts_by_pattern <- purrr::transpose(pattern_counts_by_record) %>%
+#     purrr::map(unlist) %>%
+#     purrr::map(unname)
+#   }
 
   flags <- NULL
 
@@ -134,9 +141,10 @@ hash_comparisons <- function(cd,
 
 
   patterns <- list(ohe = unique_patterns,
-                   total_counts = pattern_counts,
-                   pattern_counts_by_record = pattern_counts_by_record,
-                   record_counts_by_pattern = record_counts_by_pattern,
+                   total_counts = total_counts,
+                   #pattern_counts_by_record = pattern_counts_by_record,
+                   #record_counts_by_pattern = record_counts_by_pattern,
+                   hash_count_table = hash_count_table,
                    hash_to_file_1 = hash_to_file_1,
                    flags = flags,
                    field_marker = field_marker,

@@ -4,8 +4,9 @@ vi_efficient <- function(hash, threshold = 1e-6, tmax = 1000, fixed_iterations =
   ohe <- hash$ohe # One-hot encodings e(h_p)
   P <- dim(ohe)[1]
   total_counts <- hash$total_counts #N_p
-  pattern_counts_by_record <- hash$pattern_counts_by_record #N_p_j
-  record_counts_by_pattern <- hash$record_counts_by_pattern
+  # pattern_counts_by_record <- hash$pattern_counts_by_record #N_p_j
+  # record_counts_by_pattern <- hash$record_counts_by_pattern
+  hash_count_table <- hash$hash_count_table
   field_marker <- hash$field_marker
   n1 <- hash$n1
   n2 <- hash$n2
@@ -64,7 +65,7 @@ vi_efficient <- function(hash, threshold = 1e-6, tmax = 1000, fixed_iterations =
     single <- exp(digamma(b_pi))
 
     # Phi_j
-    C <- sapply(pattern_counts_by_record, function(x){
+    C <- apply(hash_count_table, 2, function(x){
       x %*% phi + single
     })
 
@@ -72,8 +73,8 @@ vi_efficient <- function(hash, threshold = 1e-6, tmax = 1000, fixed_iterations =
     total_nonmatch <- sum(single/ C)
 
     # N_p(Psi)
-    K <- sapply(1:P, function(p){
-      sum(record_counts_by_pattern[[p]]/C)
+    K <- apply(hash_count_table, 1, function(x){
+      sum(x/C)
     })
 
     AZ <- ohe %>%
@@ -94,7 +95,7 @@ vi_efficient <- function(hash, threshold = 1e-6, tmax = 1000, fixed_iterations =
     if(t %% store_every == 0 | t == 1){
     elbo_pieces <- vector(length = 6)
     elbo_pieces[1] <- sapply(1:n2, function(j){
-      sum(pattern_counts_by_record[[j]] * (phi *(weights - log(phi) + log(C[j]))/ C[j] +
+      sum(hash_count_table[, j] * (phi *(weights - log(phi) + log(C[j]))/ C[j] +
                                              u_p))
     }) %>%
       sum(.)

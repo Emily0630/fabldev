@@ -40,7 +40,7 @@ brl_efficient_serge <- function(hash, m_prior = 1, u_prior = 1,
   unique_patterns <- hash$ohe
   pattern_counts <- hash$total_counts
   P <- nrow(unique_patterns)
-  counts_by_rec <- hash$pattern_counts_by_record
+  hash_count_table <- hash$hash_count_table
   hash_to_file_1 <-hash$hash_to_file_1
   pair_to_pattern <- hash$pair_to_pattern
 
@@ -108,18 +108,19 @@ brl_efficient_serge <- function(hash, m_prior = 1, u_prior = 1,
 
       if(mode == "base"){
         available <- which(Z_inv == 0)
-        temp_weights <- c(empty_weight, unique_weights[pair_to_pattern[[j]][available]])
+        #temp_weights <- c(empty_weight, unique_weights[pair_to_pattern[[j]][available]])
+        temp_weights <- c(empty_weight, unique_weights[pair_to_pattern[, j][available]])
 
         Z[j] <- sample(c(0, available), 1, prob = temp_weights)
         if(Z[j] > 0){
-          Z_pattern[j] <- pair_to_pattern[[j]][Z[j]]
+          Z_pattern[j] <- pair_to_pattern[, j][Z[j]]
         }
         else{
           Z_pattern[j] <- 0
         }
       }
       else if(mode == "efficient"){
-        n_current <- counts_by_rec[[j]]
+        n_current <- hash_count_table[, j]
         for(k in 1:n2){
           if(Z[k] > 0){
             ind <- pair_to_pattern[[j]][Z[k]]
@@ -135,7 +136,7 @@ brl_efficient_serge <- function(hash, m_prior = 1, u_prior = 1,
         }
         else{
           flag_2 <- 1
-          npj <- counts_by_rec[[j]][pattern]
+          npj <- hash_count_table[, j][pattern]
           while(flag_2 == 1){
             index <- ceiling(runif(1) * npj)
             i <- hash_to_file_1[[j]][[pattern]][index]
@@ -148,7 +149,7 @@ brl_efficient_serge <- function(hash, m_prior = 1, u_prior = 1,
         }
       }
       else if(mode == "rejection"){
-        hash_weights <- counts_by_rec[[j]] * unique_weights
+        hash_weights <- hash_count_table[, j] * unique_weights
         probs <- c(empty_weight, hash_weights)
         flag <- 1
         iter <- 0
@@ -160,7 +161,7 @@ brl_efficient_serge <- function(hash, m_prior = 1, u_prior = 1,
             flag <- 0
           }
           else{
-            index <- ceiling(runif(1) * counts_by_rec[[j]][pattern])
+            index <- ceiling(runif(1) * hash_count_table[, j][pattern])
             i <- hash_to_file_1[[j]][[pattern]][index]
             if(Z_inv[i] == 0){
               Z[j] <- i
@@ -173,11 +174,11 @@ brl_efficient_serge <- function(hash, m_prior = 1, u_prior = 1,
 
             # O(n1)
             available <- which(Z_inv == 0)
-            temp_weights <- c(empty_weight, unique_weights[pair_to_pattern[[j]][available]])
+            temp_weights <- c(empty_weight, unique_weights[pair_to_pattern[, j][available]])
 
             Z[j] <- sample(c(0, available), 1, prob = temp_weights)
             if(Z[j] > 0){
-              Z_pattern[j] <- pair_to_pattern[[j]][Z[j]]
+              Z_pattern[j] <- pair_to_pattern[, j][Z[j]]
             }
             else{
               Z_pattern[j] <- 0

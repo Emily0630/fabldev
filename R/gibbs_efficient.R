@@ -23,7 +23,8 @@ gibbs_efficient <- function(hash, m_prior = 1, u_prior = 1,
   unique_patterns <- hash$ohe
   pattern_counts <- hash$total_counts
   P <- nrow(unique_patterns)
-  counts_by_rec <- hash$pattern_counts_by_record
+  hash_count_table <- hash$hash_count_table
+  #counts_by_rec <- hash$pattern_counts_by_record
   hash_to_file_1 <-hash$hash_to_file_1
 
   #candidates_P <- 1:(P+1)
@@ -76,7 +77,7 @@ gibbs_efficient <- function(hash, m_prior = 1, u_prior = 1,
 
     unique_weights <- exp(rowSums(ratio * unique_patterns, na.rm = TRUE))
 
-    hash_weights <- lapply(counts_by_rec, function(x){
+    hash_weights <- apply(hash_count_table, 2, function(x){
       x * unique_weights
     })
 
@@ -87,7 +88,7 @@ gibbs_efficient <- function(hash, m_prior = 1, u_prior = 1,
         L <- L - 1
       }
       Z[j] <- sample(candidates_P, 1,
-                     prob = c(1 - pi, hash_weights[[j]] * pi / n1))
+                     prob = c(1 - pi, hash_weights[, j] * pi / n1))
       if(Z[j] > 0){
         #index <- ceiling(runif(1) * counts_by_rec[[j]][Z[j]]) #Causes issue with SEI
         index <- ceiling(runif(1) * length(hash_to_file_1[[j]][[Z[j]]]))

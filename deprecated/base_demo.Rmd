@@ -35,7 +35,6 @@ threshold = 1e-5
 tmax = 1000
 fixed_iterations = NULL
 b_init = TRUE
-B = min(1000, hash$n2)
 k = 1
 tau = 1
 seed = 0
@@ -48,7 +47,7 @@ u <- c(.99, .01, .99, .01,
 
 levels <- c(2, 2, 2, 2, 2)
 
-S <- 100; burn <- S * .1
+S <- 50; burn <- S * .1
 m_prior <- u_prior <- rep(1, length(m))
 alpha <- beta <- 1
 
