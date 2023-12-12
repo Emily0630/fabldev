@@ -7,7 +7,7 @@ combine_hash <- function(hash_list, n1, n2){
     colSums()
 
   hash_count_table <- purrr::map(hash_list, ~.x$hash_count_table) %>%
-    do.call(`+`, .)
+    Reduce(`+`, .)
 
   pair_to_pattern <- purrr::map(hash_list, ~.x$pair_to_pattern) %>%
     do.call(cbind, .)
