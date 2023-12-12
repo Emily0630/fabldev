@@ -2,29 +2,35 @@
 #'
 combine_hash <- function(hash_list, n1, n2){
 
-    total_counts <- purrr::map(hash_list, ~.x$total_counts) %>%
+  total_counts <- purrr::map(hash_list, ~.x$total_counts) %>%
     do.call(rbind, .) %>%
     colSums()
 
-  pattern_counts_by_record <- hash_list %>%
-    purrr::map(`[[`, "pattern_counts_by_record") %>%
-    purrr::flatten()
+  hash_count_table <- purrr::map(hash_list, ~.x$hash_count_table) %>%
+    do.call(`+`, .)
+
+  pair_to_pattern <- purrr::map(hash_list, ~.x$pair_to_pattern) %>%
+    do.call(cbind, .)
+
+  # pattern_counts_by_record <- hash_list %>%
+  #   purrr::map(`[[`, "pattern_counts_by_record") %>%
+  #   purrr::flatten()
 
   hash_to_file_1 <- hash_list %>%
     purrr::map(`[[`, "hash_to_file_1") %>%
     purrr::flatten()
 
-  record_counts_by_pattern <- purrr::transpose(pattern_counts_by_record) %>%
-    purrr::map(unlist) %>%
-    purrr::map(unname)
+  # record_counts_by_pattern <- purrr::transpose(pattern_counts_by_record) %>%
+  #   purrr::map(unlist) %>%
+  #   purrr::map(unname)
 
   flags <- hash_list %>%
     purrr::map(`[[`, "flags") %>%
     purrr::flatten()
 
-  pair_to_pattern <- hash_list %>%
-    purrr::map(`[[`, "pair_to_pattern") %>%
-    purrr::flatten()
+  # pair_to_pattern <- hash_list %>%
+  #   purrr::map(`[[`, "pair_to_pattern") %>%
+  #   purrr::flatten()
 
   patterns <- list(ohe = hash_list[[1]]$ohe,
                    total_counts = total_counts,
