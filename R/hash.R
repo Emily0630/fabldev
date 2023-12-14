@@ -60,7 +60,7 @@ hash_comparisons <- function(cd,
     count() %>%
     ungroup() %>%
     group_split(rec2) %>%
-    map(~.x %>%
+    purrr::map(~.x %>%
           select(n) %>%
           pull()
         )
