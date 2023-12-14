@@ -6,7 +6,7 @@ vi_efficient <- function(hash, threshold = 1e-6, tmax = 1000, fixed_iterations =
   total_counts <- hash$total_counts #N_p
   # pattern_counts_by_record <- hash$pattern_counts_by_record #N_p_j
   # record_counts_by_pattern <- hash$record_counts_by_pattern
-  hash_count_table <- hash$hash_count_table
+  hash_count_list <- hash$hash_count_list
   field_marker <- hash$field_marker
   n1 <- hash$n1
   n2 <- hash$n2
@@ -65,7 +65,11 @@ vi_efficient <- function(hash, threshold = 1e-6, tmax = 1000, fixed_iterations =
     single <- exp(digamma(b_pi))
 
     # Phi_j
-    C <- apply(hash_count_table, 2, function(x){
+    # C <- apply(hash_count_table, 2, function(x){
+    #   x %*% phi + single
+    # })
+
+    C <- sapply(hash_count_list, function(x){
       x %*% phi + single
     })
 
@@ -73,9 +77,13 @@ vi_efficient <- function(hash, threshold = 1e-6, tmax = 1000, fixed_iterations =
     total_nonmatch <- sum(single/ C)
 
     # N_p(Psi)
-    K <- apply(hash_count_table, 1, function(x){
-      sum(x/C)
-    })
+    # K <- apply(hash_count_table, 1, function(x){
+    #   sum(x/C)
+    # })
+    K <- sapply(1:n2, function(j){
+      hash_count_list[[j]] / C[j]
+    }) %>%
+      rowSums()
 
     AZ <- ohe %>%
       sweep(., 1, phi * K, "*") %>%
@@ -95,7 +103,7 @@ vi_efficient <- function(hash, threshold = 1e-6, tmax = 1000, fixed_iterations =
     if(t %% store_every == 0 | t == 1){
     elbo_pieces <- vector(length = 6)
     elbo_pieces[1] <- sapply(1:n2, function(j){
-      sum(hash_count_table[, j] * (phi *(weights - log(phi) + log(C[j]))/ C[j] +
+      sum(hash_count_list[[j]] * (phi *(weights - log(phi) + log(C[j]))/ C[j] +
                                              u_p))
     }) %>%
       sum(.)

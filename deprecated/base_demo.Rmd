@@ -57,12 +57,14 @@ Ztrue <- cd$Ztrue
 
 chain <- brl_efficient_serge(hash, S = S, burn = burn)
 results <- estimate_links(chain$Z, n1)
+results$Z_hat
 
 chain <- gibbs_base(cd, S = S, burn = burn)
 results <- estimate_links(chain, n1)
 
 chain <- gibbs_efficient(hash, S = S, burn = burn)
 results <- estimate_links(chain$Z, n1)
+results$Z_hat
 
 chain <- brl_efficient(hash, S = S, burn = burn)
 results <- estimate_links(chain$Z, n1)
@@ -80,9 +82,9 @@ elbo_vi <- data.frame(elbo = out$elbo_seq,
                       iter = 1:out$t, 
                       method = "vi")
 
-out <- svi_efficient(hash, B = 10, k = 1, seed = 42)
+out <- svi_efficient(hash, B = 10, k = 1, seed = 5)
 results <- vi_estimate_links(out, hash)
-evaluate_links(results$Z_hat, Z_true, n1)
+evaluate_links(results$Z_hat, Ztrue, n1)
 out$t
 elbo_svi <- data.frame(elbo = out$elbo_seq,
                       iter = seq_along(out$elbo_seq), 
@@ -162,9 +164,10 @@ Z_hat[probmaxProbOption > threshold] <- maxProbOption[probmaxProbOption > thresh
 
 thing1 <- matrix(c(1, 2, 3, 4), 2, 2)
 thing2 <- matrix(c(1, 2, 3, 4), 2, 2)
-thing <- list(thing1, thing2)
+thing3 <- matrix(c(1, 2, 3, 4), 2, 2)
+thing <- list(thing1, thing2, thing3)
 
 thing %>% 
-  do.call(rbind, .)
+  Reduce(`+`, .)
 ```
 

@@ -55,15 +55,24 @@ hash_comparisons <- function(cd,
 
   temp <- data.frame(rec1, rec2, hash_id)
 
-  hash_count_table <- temp %>%
+  hash_count_list <- temp %>%
     group_by(rec2, hash_id, .drop = F) %>%
     count() %>%
     ungroup() %>%
-    select(n) %>%
-    pull() %>%
-    matrix(., nrow = P, ncol = n2, byrow = F)
+    group_split(rec2) %>%
+    map(~.x %>%
+          select(n) %>%
+          pull()
+        )
+    # select(n) %>%
+    # pull() %>%
+    # matrix(., nrow = P, ncol = n2, byrow = F)
 
-  total_counts <- rowSums(hash_count_table)
+  #total_counts <- rowSums(hash_count_list)
+  total_counts <- temp %>%
+    group_by(hash_id) %>%
+    count() %>%
+    pull()
 
   pattern_lookup <- expand.grid(1:P, 1:n2) %>%
     data.frame() %>%
@@ -76,8 +85,7 @@ hash_comparisons <- function(cd,
     select(hash_id, rec2) %>%
     group_split(rec2, .keep = F) %>%
     lapply(., pull) %>%
-    lapply(., as.double) %>%
-    do.call(cbind, .)
+    lapply(., as.double)
   }
 
   hash_to_file_1 <- temp %>%
@@ -144,7 +152,7 @@ hash_comparisons <- function(cd,
                    total_counts = total_counts,
                    #pattern_counts_by_record = pattern_counts_by_record,
                    #record_counts_by_pattern = record_counts_by_pattern,
-                   hash_count_table = hash_count_table,
+                   hash_count_list = hash_count_list,
                    hash_to_file_1 = hash_to_file_1,
                    flags = flags,
                    field_marker = field_marker,
