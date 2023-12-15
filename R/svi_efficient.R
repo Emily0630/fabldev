@@ -100,7 +100,7 @@ k = 1, tau = 1, seed = 0, fixed_u = F, check_every = 10, store_every = check_eve
     # }) * adjustment
 
     # K <- sapply(1:P, function(p){ #The "batch" subsetting is only in SVI
-    #   sum(hash_count_table[[batch]][batch]/C)
+    #   sum(record_count_by_pattern[[p]][batch]/C)
     # }) * adjustment
 
     K <- sapply(seq_along(batch), function(i){
