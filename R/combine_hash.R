@@ -36,7 +36,7 @@ combine_hash <- function(hash_list, n1, n2){
                    total_counts = total_counts,
                    #pattern_counts_by_record = pattern_counts_by_record,
                    #record_counts_by_pattern = record_counts_by_pattern,
-                   hash_count_table = hash_count_table,
+                   hash_count_list = hash_count_list,
                    hash_to_file_1 = hash_to_file_1,
                    flags = flags,
                    field_marker = hash_list[[1]]$field_marker,
