@@ -22,7 +22,7 @@ vi_efficient <- function(hash, threshold = 1e-6, tmax = 1000, fixed_iterations =
   if(b_init == T){
     b <- hash$ohe %>%
       sweep(., 1, hash$total_counts, "*") %>%
-      colSums()
+      colSums() + Beta
   } else {
     b = rep(1, length(field_marker))
   }

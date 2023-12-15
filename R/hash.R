@@ -70,7 +70,7 @@ hash_comparisons <- function(cd,
 
   #total_counts <- rowSums(hash_count_list)
   total_counts <- temp %>%
-    group_by(hash_id) %>%
+    group_by(hash_id, .drop = F) %>%
     count() %>%
     pull()
 
