@@ -5,7 +5,7 @@ hash_comparisons <- function(cd,
          all_patterns = FALSE, store_pair_to_pattern = TRUE){
 
 
-  if("brl" %in% method){
+  if("brl" %in% algorithm){
     R <- NULL
   }
   indicators <- cd[[1]]
@@ -80,7 +80,7 @@ hash_comparisons <- function(cd,
 
   pair_to_pattern <- NULL
 
-  if("brl" %in% method){
+  if("brl" %in% algorithm){
   pair_to_pattern <- temp %>%
     select(hash_id, rec2) %>%
     group_split(rec2, .keep = F) %>%
@@ -108,7 +108,7 @@ hash_comparisons <- function(cd,
 #
 #   record_counts_by_pattern <- NULL
 #
-#   if("vabl" %in% method){
+#   if("vabl" %in% algorithm){
 #   record_counts_by_pattern <- purrr::transpose(pattern_counts_by_record) %>%
 #     purrr::map(unlist) %>%
 #     purrr::map(unname)
@@ -116,7 +116,7 @@ hash_comparisons <- function(cd,
 
   flags <- NULL
 
-  if("vabl" %in% method){
+  if("vabl" %in% algorithm){
 
   flags <- hash_to_file_1 %>%
     filter(N ==1) %>%
@@ -127,7 +127,7 @@ hash_comparisons <- function(cd,
     group_split(rec2, .keep = F)
   }
 
-  if("fabl" %in% method | "brl" %in% method){
+  if("fabl" %in% algorithm | "brl" %in% algorithm){
     hash_to_file_1 <- hash_to_file_1 %>%
       group_split(rec2) %>%
       purrr::map(., ~ .x %>%
@@ -141,7 +141,7 @@ hash_comparisons <- function(cd,
       })}
   }
 
-  if(!("fabl" %in% method) & !("brl" %in% method)){
+  if(!("fabl" %in% algorithm) & !("brl" %in% algorithm)){
     hash_to_file_1 <- NULL
   }
 
