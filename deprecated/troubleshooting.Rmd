@@ -16,37 +16,98 @@ knitr::opts_chunk$set(
 
 ```{r setup}
 library(fabldev)
+library(RecordLinkage)
+library(dplyr)
+library(stringr)
+library(purrr)
+library(readr)
+library(BRL)
+library(fastLink)
+
 ```
 
 ```{r}
-hash <- readRDS("../../vablpaper/out/ncvr_combine/hash")
-ncvr_a <- readRDS("../../vablpaper/data/ncvr_a")
-ncvr_b <- readRDS("../../vablpaper/data/ncvr_b")
+files <- list.files(path = "../../bk_vabl/data/sadinle_sim_data/", full.names = T)
+i = 1
+j = 1
+m_prior = 1
+u_prior = 1
+alpha = 1
+beta = 1
+S = 1000
+burn = 100
+show_progress = F
+fast = F
+R = NULL
+all_patterns = TRUE
+tmax= 200
+threshold = 1e-6
+resolve = T
+method = c("vabl", "fabl", "brl")
 
-df1 <- ncvr_a %>%
-  select(voter_id) %>% 
-  mutate(rn = row_number()) %>% 
-  arrange(voter_id)
-  
 
-df2 <- ncvr_b %>%
-  select(voter_id) %>% 
-  arrange(voter_id)
+overlap_vals <- c(50, 250, 450)
+
+for(j in seq_along(overlap_vals)){
+
+  overlap <- overlap_vals[j]
+
+  records <- read_csv(files[i], col_types = cols())
+  records$file <- rep(2:1, length.out = dim(records)[1])
+
+  records <- records %>%
+    janitor::clean_names() %>%
+    mutate(rec_id = as.numeric(str_extract(rec_id, "\\d{3}")) + 1)
+
+  n1 <- 500
+  n2 <- 500
+  #overlap <- n2/2
+
+  # Ztrue <- n1 + 1:n2
+  # Ztrue[1:overlap] <- 1:overlap
+
+  Ztrue <- rep(0, n2)
+  Ztrue[1:overlap] <- 1:overlap
+
+  file1 <- records %>%
+    filter(file ==1,
+           rec_id <= n1) %>%
+    select(-rec_id) %>%
+    as.matrix(.) %>%
+    data.frame(.) %>%
+    mutate(occup = as.numeric(occup))
+
+  file2 <- records %>%
+    filter(file == 2,
+           rec_id %in% c(1:overlap, (n1 +1):(1000 - overlap))) %>%
+    select(-rec_id) %>%
+    as.matrix() %>%
+    data.frame(.) %>%
+    mutate(occup = as.numeric(occup))
+
+  out_fl <- fastLink(file1, file2, varnames = names(file1)[c(2, 3, 5, 6)],
+                     stringdist.match = names(file1)[c(2, 3)],
+                     partial.match = names(file1)[c(2, 3)],
+                     cut.a = 1, cut.p = .75, threshold.match = .5)
+
+  MakeZhat_from_fastlink <- function(id_1, id_2){
+    Zhat <- rep(0, n2)
+    Zhat[id_1] <- id_2
+    Zhat
+  }
+
+  Zhat <- MakeZhat_from_fastlink(out_fl$matches$inds.a, out_fl$matches$inds.b)
+
+  eval <- evaluate_links(Zhat, Ztrue, n1)
+ fastlink_acc_samps[j, ] <- c(eval, NA, NA, overlap)
 
 
-joined <- right_join(df1, df2, by = "voter_id")
-joined$rn[is.na(joined$rn)] <- 0
-Z_true <- joined$rn
+  cd <- compare_records(file1, file2, c(2, 3, 5, 6),
+                        types = c("lv", "lv", "bi", "bi"))
+                        #breaks = c(0, .25))
+  cd[[1]] <- apply(cd[[1]], 2, as.numeric)
 
-b <- hash$ohe %>%
-  sweep(., 1, hash$total_counts, "*") %>%
-  colSums()
 
-out <- vi_efficient(hash, b = b_init)
-results <- vi_estimate_links(out, hash)
-eval <- evaluate_links(results$Zhat, Z_true, hash$n1)
-
-cbind(results$Zhat, Z_true)
-
+  hash <- hash_comparisons(cd, all_patterns, method = c("vabl", "fabl", "brl"))
 ```
 

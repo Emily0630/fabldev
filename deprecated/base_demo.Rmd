@@ -52,7 +52,7 @@ m_prior <- u_prior <- rep(1, length(m))
 alpha <- beta <- 1
 
 cd <- simulate_comparisons(m, u, levels, n1, n2, overlap)
-hash <- hash_comparisons(cd)
+hash <- hash_comparisons(cd, method = c("vabl", "fabl"))
 Ztrue <- cd$Ztrue
 
 chain <- brl_efficient_serge(hash, S = S, burn = burn)
