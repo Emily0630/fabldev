@@ -27,7 +27,7 @@ estimate_links<- function(Z_samps, n1, lFNM=1, lFM1=1, lFM2=2, lR=Inf,
   if(!any(c(C1,C2,C3))) stop("Invalid configuration of losses")
 
   # temporarily replace all nonlink labels by n1+1
-  #Z_samps[Z_samps > n1+1] <- n1+1
+  Z_samps[Z_samps > n1+1] <- n1+1
   if(edition == "old"){
   tableLabels <- apply(Z_samps, 1, tabulate, nbins=max(Z_samps))
   tableLabels <- tableLabels/ncol(Z_samps)
