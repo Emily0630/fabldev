@@ -1,11 +1,11 @@
 #' @export
 #'
 hash_comparisons <- function(cd,
-         algorithm = c("vabl", "fabl", "brl"), R = NULL,
+         algorithm = c("vabl", "fabl", "BRL_hash_hash"), R = NULL,
          all_patterns = FALSE, store_pair_to_pattern = TRUE){
 
 
-  if("brl" %in% algorithm){
+  if("BRL_hash" %in% algorithm){
     R <- NULL
   }
   indicators <- cd[[1]]
@@ -37,7 +37,7 @@ hash_comparisons <- function(cd,
 
   if(all_patterns == TRUE){
 
-    unique_patterns <- possible_patterns_sadinle(levels)
+    unique_patterns <- possible_patterns_ohe(levels)
     unique_hashed <- sweep(unique_patterns, 2, hash_vals, "*") %>%
       rowSums() + 1
     P <- dim(unique_patterns)[1]
@@ -80,7 +80,7 @@ hash_comparisons <- function(cd,
 
   pair_to_pattern <- NULL
 
-  if("brl" %in% algorithm){
+  if("BRL_hash" %in% algorithm){
   pair_to_pattern <- temp %>%
     select(hash_id, rec2) %>%
     group_split(rec2, .keep = F) %>%
@@ -127,7 +127,7 @@ hash_comparisons <- function(cd,
     group_split(rec2, .keep = F)
   }
 
-  if("fabl" %in% algorithm | "brl" %in% algorithm){
+  if("fabl" %in% algorithm | "BRL_hash" %in% algorithm){
     hash_to_file_1 <- hash_to_file_1 %>%
       group_split(rec2) %>%
       purrr::map(., ~ .x %>%
@@ -141,7 +141,7 @@ hash_comparisons <- function(cd,
       })}
   }
 
-  if(!("fabl" %in% algorithm) & !("brl" %in% algorithm)){
+  if(!("fabl" %in% algorithm) & !("BRL_hash" %in% algorithm)){
     hash_to_file_1 <- NULL
   }
 
@@ -161,10 +161,5 @@ hash_comparisons <- function(cd,
                    pair_to_pattern = pair_to_pattern)
   patterns
 
-}
-
-hash_field <- function(L_f, k, Lf_vec){
-  level_seq <- seq_len(L_f)
-  as.numeric(level_seq > 0) * 2 ^ ((level_seq) + (as.numeric(k > 1)  * Lf_vec[k]))
 }
 

@@ -1,14 +1,11 @@
 #' @export
 #'
-compare_records <- function(df1,
-                             df2,
+compare_records <- function(df1, df2,
                              flds=NULL,
                              flds1=NULL,
                              flds2=NULL,
                              types=NULL,
-                             breaks=c(0,.25,.5),
-                             df1_index = NULL,
-                             df2_index = NULL){
+                             breaks=c(0,.25,.5)){
 
   # Adapted from BRL::compareRecords. See https://CRAN.R-project.org/package=BRL
 
@@ -227,9 +224,7 @@ compare_records <- function(df1,
               n1=n1,
               n2=n2,
               nDisagLevs=nDisagLevs,
-              compFields=compFields,
-              df1_index = df1_index,
-              df2_index = df2_index)
+              compFields=compFields)
 
   return(out)
 }

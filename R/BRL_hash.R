@@ -1,21 +1,6 @@
-
-# hash_add_t <- function(hash){
-#   pair_to_pattern <- vector(mode = "list", length = hash$n2)
-#   for(j in 1:hash$n2){
-#     pair_to_pattern[[j]] <- rep(0, hash$n1)
-#     for(p in 1:length(hash$total_counts)){
-#       for(i in 1:hash$pattern_counts_by_record[[j]][p]){
-#         pair_to_pattern[[j]][hash$hash_to_file_1[[j]][[p]]] <- p
-#       }
-#     }
-#   }
-#   hash$pair_to_pattern <- pair_to_pattern
-#   return(hash)
-# }
-
 #' @export
 #'
-brl_efficient_serge <- function(hash, m_prior = 1, u_prior = 1,
+BRL_hash <- function(hash, m_prior = 1, u_prior = 1,
                           alpha = 1, beta = 1, S = 1000, burn = round(S * .1),
                           show_progress = T, seed = 0, reject_iter = round(hash$n2/length(hash$total_counts)),
                           mode = "rejection"){
@@ -44,35 +29,32 @@ brl_efficient_serge <- function(hash, m_prior = 1, u_prior = 1,
   hash_to_file_1 <-hash$hash_to_file_1
   pair_to_pattern <- hash$pair_to_pattern
 
-  #candidates_P <- 1:(P+1)
   candidates_P <- 0:P
-  Z.SAMPS <- matrix(NA, nrow = n2, ncol = S)
-  M.SAMPS <- matrix(NA, nrow = length(field_marker), ncol = S)
-  U.SAMPS <- matrix(NA, nrow = length(field_marker), ncol = S)
-  L.SAMPS <- vector(length = S)
+  Z_samps <- matrix(NA, nrow = n2, ncol = S)
+  m_usamps <- matrix(NA, nrow = length(field_marker), ncol = S)
+  u_samps <- matrix(NA, nrow = length(field_marker), ncol = S)
+  L_samps <- vector(length = S)
+
+  # Initialization
   Z <- rep(0, n2)
   Z_pattern <- rep(0, n2)
   Z_inv <- rep(0, n1)
   L <- 0
-
   m <- u <- rep(0, length(field_marker))
   matches <- rep(0, P)
-  #already_matched <- rep(0, n1)
-  #set.seed(1)
 
   # Gibbs
   for(s in 1:S){
 
+    # Update m and u
     AZ <- sweep(unique_patterns, MARGIN = 1, STAT = matches, FUN = "*") %>%
       colSums() %>%
       unname()
-
     nonmatches <- pattern_counts - matches
 
     BZ <- sweep(unique_patterns, MARGIN = 1, STAT = nonmatches, FUN = "*") %>%
       colSums() %>%
       unname()
-
 
     m_post <- m_prior + AZ
     u_post <- u_prior + BZ
@@ -89,7 +71,7 @@ brl_efficient_serge <- function(hash, m_prior = 1, u_prior = 1,
       prob/sum(prob)
     })))
 
-
+    # Calculate weights
     ratio <- (log(m) - log(u)) %>%
       rep(., P) %>%
       matrix(., nrow = P, byrow = TRUE)
@@ -108,7 +90,6 @@ brl_efficient_serge <- function(hash, m_prior = 1, u_prior = 1,
 
       if(mode == "base"){
         available <- which(Z_inv == 0)
-        #temp_weights <- c(empty_weight, unique_weights[pair_to_pattern[[j]][available]])
         temp_weights <- c(empty_weight, unique_weights[pair_to_pattern[[j]][available]])
 
         Z[j] <- sample(c(0, available), 1, prob = temp_weights)
@@ -183,35 +164,6 @@ brl_efficient_serge <- function(hash, m_prior = 1, u_prior = 1,
             else{
               Z_pattern[j] <- 0
             }
-
-            # O(n2 + P)
-            # n_current <- counts_by_rec[[j]]
-            # for(k in 1:n2){
-            #   if(Z[k] > 0){
-            #     ind <- pair_to_pattern[[j]][Z[k]]
-            #     n_current[ind] <- n_current[ind] - 1
-            #   }
-            # }
-            # temp_weights <- n_current * unique_weights
-            # probs <- c(empty_weight, temp_weights)
-            # pattern <- sample(candidates_P, 1, prob = probs)
-            # if(pattern == 0){
-            #   Z[j] <- 0
-            #   Z_pattern[j] <- 0
-            # }
-            # else{
-            #   flag_2 <- 1
-            #   npj <- counts_by_rec[[j]][pattern]
-            #   while(flag_2 == 1){
-            #     index <- ceiling(runif(1) * npj)
-            #     i <- hash_to_file_1[[j]][[pattern]][index]
-            #     if(Z_inv[i] == 0){
-            #       Z[j] <- i
-            #       Z_pattern[j] <- pattern
-            #       flag_2 <- 0
-            #     }
-            #   }
-            # }
             flag <- 0
           }
         }
@@ -230,10 +182,10 @@ brl_efficient_serge <- function(hash, m_prior = 1, u_prior = 1,
       filter(hash_matches != 0) %>%
       pull()
 
-    Z.SAMPS[,s] <- Z
-    M.SAMPS[,s] <- m
-    U.SAMPS[,s] <- u
-    L.SAMPS[s] <- L
+    Z_samps[,s] <- Z
+    m_samps[,s] <- m
+    u_samps[,s] <- u
+    L_samps[s] <- L
 
     if(show_progress){
       if (s %% (S / 100) == 0) {
@@ -244,11 +196,11 @@ brl_efficient_serge <- function(hash, m_prior = 1, u_prior = 1,
     }
   }
 
-  Z.SAMPS[Z.SAMPS == 0] <- n1 + 1
+  Z_samps[Z_samps == 0] <- n1 + 1
 
-  list(Z = Z.SAMPS,
-       m = M.SAMPS,
-       u = U.SAMPS,
-       overlap = L.SAMPS)
+  list(Z = Z_samps,
+       m = m_samps,
+       u = u_samps,
+       overlap = L_samps)
 
 }

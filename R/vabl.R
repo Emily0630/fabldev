@@ -1,11 +1,9 @@
-vi_efficient <- function(hash, threshold = 1e-6, tmax = 1000, fixed_iterations = NULL,
+vabl <- function(hash, threshold = 1e-6, tmax = 1000, fixed_iterations = NULL,
                            b_init = TRUE, check_every = 10, store_every = check_every){
 
-  ohe <- hash$ohe # One-hot encodings e(h_p)
+  ohe <- hash$ohe
   P <- dim(ohe)[1]
   total_counts <- hash$total_counts #N_p
-  # pattern_counts_by_record <- hash$pattern_counts_by_record #N_p_j
-  # record_counts_by_pattern <- hash$record_counts_by_pattern
   hash_count_list <- hash$hash_count_list
   field_marker <- hash$field_marker
   n1 <- hash$n1
@@ -65,10 +63,6 @@ vi_efficient <- function(hash, threshold = 1e-6, tmax = 1000, fixed_iterations =
     single <- exp(digamma(b_pi))
 
     # Phi_j
-    # C <- apply(hash_count_table, 2, function(x){
-    #   x %*% phi + single
-    # })
-
     C <- sapply(hash_count_list, function(x){
       x %*% phi + single
     })
@@ -77,9 +71,6 @@ vi_efficient <- function(hash, threshold = 1e-6, tmax = 1000, fixed_iterations =
     total_nonmatch <- sum(single/ C)
 
     # N_p(Psi)
-    # K <- apply(hash_count_table, 1, function(x){
-    #   sum(x/C)
-    # })
     K <- sapply(1:n2, function(j){
       hash_count_list[[j]] / C[j]
     }) %>%
@@ -102,18 +93,14 @@ vi_efficient <- function(hash, threshold = 1e-6, tmax = 1000, fixed_iterations =
     # ELBO
     if(t %% store_every == 0 | t == 1){
     elbo_pieces <- vector(length = 6)
+
     elbo_pieces[1] <- sapply(1:n2, function(j){
-      sum(hash_count_list[[j]] * (phi *(weights - log(phi) + log(C[j]))/ C[j] +
-                                             u_p))
+      sum(hash_count_list[[j]] *
+            (phi *(weights - log(phi) + log(C[j]))/ C[j] + u_p))
     }) %>%
       sum(.)
-
-    #elbo_pieces[2] <- -sum(single/C *log(single/C)) + total_nonmatch * log(n1) -log(n1)*n2
     elbo_pieces[2] <- single * sum(1/C *log(C)) + total_nonmatch * (log(n1) - log(single)) -log(n1)*n2
-
     elbo_pieces[3] <- lbeta(a_pi, b_pi) - lbeta(alpha_pi, beta_pi)
-
-
     elbo_pieces[4] <- sapply(list(a, b), function(y){
       split(y, field_marker) %>%
         sapply(., function(x){
@@ -122,8 +109,7 @@ vi_efficient <- function(hash, threshold = 1e-6, tmax = 1000, fixed_iterations =
         sum(.)
     }) %>%
       sum(.)
-
-    elbo_pieces[5] <- -sapply(list(alpha, Beta), function(y){
+    elbo_pieces[5] <- - sapply(list(alpha, Beta), function(y){
       split(y, field_marker) %>%
         sapply(., function(x){
           sum(lgamma(x)) - lgamma(sum(x))
@@ -131,22 +117,10 @@ vi_efficient <- function(hash, threshold = 1e-6, tmax = 1000, fixed_iterations =
         sum(.)
     }) %>%
       sum(.)
-
     elbo_pieces[6] <- sum((alpha - a) * a_chunk + (Beta - b) * b_chunk)
     elbo <- sum(elbo_pieces)
     elbo_seq <- c(elbo_seq, elbo)
     }
-
-
-    # if(is.null(fixed_iterations)){
-    #   if(t %% check_every == 0){
-    #     ratio <- abs((elbo_seq[t] - elbo_seq[t - check_every +1])/
-    #                    elbo_seq[t - check_every +1])
-    #   }
-    #   if(ratio < threshold){
-    #     break
-    #   }
-    # }
 
     if(is.null(fixed_iterations)){
       if(t %% check_every == 0){

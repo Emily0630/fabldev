@@ -27,6 +27,7 @@ library(fastLink)
 ```
 
 ```{r}
+getwd()
 files <- list.files(path = "../../bk_vabl/data/sadinle_sim_data/", full.names = T)
 i = 1
 j = 1
@@ -104,6 +105,10 @@ for(j in seq_along(overlap_vals)){
 
   cd <- compare_records(file1, file2, c(2, 3, 5, 6),
                         types = c("lv", "lv", "bi", "bi"))
+  
+  cd_BK <- compare_records_BK(file1, file2, c(2, 3, 5, 6),
+                        types = c("lv", "lv", "bi", "bi"))
+  
                         #breaks = c(0, .25))
   cd[[1]] <- apply(cd[[1]], 2, as.numeric)
 
