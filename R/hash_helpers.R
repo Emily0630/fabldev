@@ -3,11 +3,6 @@
 #'
 #'
 #'
-hash_field <- function(L_f, k, Lf_vec){
-  level_seq <- seq_len(L_f)
-  as.numeric(level_seq > 0) * 2 ^ ((level_seq) + (as.numeric(k > 1)  * Lf_vec[k]))
-}
-
 fs_to_ohe <- function(gamma, levels){
   unname(unlist(mapply(function(z, y){
     gamma_f <- rep(0, y)
@@ -29,12 +24,4 @@ possible_patterns_ohe <- function(levels){
     fs_to_ohe(x, levels)
   })))
 
-}
-
-sei <- function(x, R){
-  if(length(x) <= R){
-    return(x)
-  } else {
-    sample(x, R, replace = FALSE)
-  }
 }

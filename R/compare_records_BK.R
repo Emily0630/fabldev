@@ -57,7 +57,7 @@ compare_records_BK <- function(df_1, df_2, fields,
   # TODO: Test for speed vs onehot encoding function, or lapply
   for(f in 1:F){
     ohe[[f]] <- matrix(0, nrow = n1 * n2, ncol = n_levels[f])
-    for(ell in 1:L_f){
+    for(ell in 1:n_levels[f]){
       ohe[[f]][comparisons[[f]] == ell, ell] <- 1
     }
   }

@@ -105,14 +105,14 @@ for(j in seq_along(overlap_vals)){
 
   cd <- compare_records(file1, file2, c(2, 3, 5, 6),
                         types = c("lv", "lv", "bi", "bi"))
+  cd[[1]] <- apply(cd[[1]], 2, as.numeric)
   
   cd_BK <- compare_records_BK(file1, file2, c(2, 3, 5, 6),
                         types = c("lv", "lv", "bi", "bi"))
+
+  hash <- hash_comparisons(cd, all_patterns, algorithm = c("vabl", "fabl", "brl"))
+  hash_BK <- hash_comparisons(cd, all_patterns, algorithm = c("vabl", "fabl", "brl"))
   
-                        #breaks = c(0, .25))
-  cd[[1]] <- apply(cd[[1]], 2, as.numeric)
-
-
-  hash <- hash_comparisons(cd, all_patterns, method = c("vabl", "fabl", "brl"))
+  out <- vabl
 ```
 

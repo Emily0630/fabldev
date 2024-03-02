@@ -1,7 +1,7 @@
 #' @export
 #'
 hash_comparisons <- function(cd,
-         algorithm = c("vabl", "fabl", "BRL_hash_hash"), R = NULL,
+         algorithm = c("vabl", "fabl", "BRL_hash"), R = NULL,
          all_patterns = FALSE, store_pair_to_pattern = TRUE){
 
 
