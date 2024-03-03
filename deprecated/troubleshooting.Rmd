@@ -21,13 +21,11 @@ library(dplyr)
 library(stringr)
 library(purrr)
 library(readr)
-library(BRL)
-library(fastLink)
 
 ```
 
 ```{r}
-getwd()
+
 files <- list.files(path = "../../bk_vabl/data/sadinle_sim_data/", full.names = T)
 i = 1
 j = 1
@@ -49,8 +47,6 @@ method = c("vabl", "fabl", "brl")
 
 overlap_vals <- c(50, 250, 450)
 
-for(j in seq_along(overlap_vals)){
-
   overlap <- overlap_vals[j]
 
   records <- read_csv(files[i], col_types = cols())
@@ -62,10 +58,6 @@ for(j in seq_along(overlap_vals)){
 
   n1 <- 500
   n2 <- 500
-  #overlap <- n2/2
-
-  # Ztrue <- n1 + 1:n2
-  # Ztrue[1:overlap] <- 1:overlap
 
   Ztrue <- rep(0, n2)
   Ztrue[1:overlap] <- 1:overlap
@@ -86,23 +78,6 @@ for(j in seq_along(overlap_vals)){
     data.frame(.) %>%
     mutate(occup = as.numeric(occup))
 
-  out_fl <- fastLink(file1, file2, varnames = names(file1)[c(2, 3, 5, 6)],
-                     stringdist.match = names(file1)[c(2, 3)],
-                     partial.match = names(file1)[c(2, 3)],
-                     cut.a = 1, cut.p = .75, threshold.match = .5)
-
-  MakeZhat_from_fastlink <- function(id_1, id_2){
-    Zhat <- rep(0, n2)
-    Zhat[id_1] <- id_2
-    Zhat
-  }
-
-  Zhat <- MakeZhat_from_fastlink(out_fl$matches$inds.a, out_fl$matches$inds.b)
-
-  eval <- evaluate_links(Zhat, Ztrue, n1)
- fastlink_acc_samps[j, ] <- c(eval, NA, NA, overlap)
-
-
   cd <- compare_records(file1, file2, c(2, 3, 5, 6),
                         types = c("lv", "lv", "bi", "bi"))
   cd[[1]] <- apply(cd[[1]], 2, as.numeric)
@@ -110,9 +85,19 @@ for(j in seq_along(overlap_vals)){
   cd_BK <- compare_records_BK(file1, file2, c(2, 3, 5, 6),
                         types = c("lv", "lv", "bi", "bi"))
 
-  hash <- hash_comparisons(cd, all_patterns, algorithm = c("vabl", "fabl", "brl"))
-  hash_BK <- hash_comparisons(cd, all_patterns, algorithm = c("vabl", "fabl", "brl"))
+  hash <- hash_comparisons(cd, algorithm = c("vabl"), all_patterns)
+  hash_BK <- hash_comparisons(cd, algorithm = c("vabl", "fabl"), R = 0, all_patterns)
   
-  out <- vabl
+  out <- vabl(hash)
+  result <- vi_estimate_links(out, hash)
+  result$Z_hat
+  
+  chain <- fabl(hash_BK, S = 100)
+  results <- estimate_links(out, hash_BK)
+  results$Z_hat
+  
+  out <- vabl(hash_BK)
+  result <- vi_estimate_links(out, hash_B)
+  result$Z_hat
 ```
 

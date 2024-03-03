@@ -1,28 +1,33 @@
 #' @export
 #'
-estimate_links<- function(Z_samps, n1, l_FNM=1, l_FM1=1, l_FM2=2, l_R=Inf,
+estimate_links<- function(out, hash, l_FNM=1, l_FM1=1, l_FM2=2, l_R=Inf,
                           nonmatch_label = "zero", resolve = T){
   #
   # Adapted from BRL::linkrecords. See https://CRAN.R-project.org/package=BRL
   #
 
-  n2 <- nrow(Z_samps)
+  # "out" can be the output from either fabl or vabl.
+
+
 
   # - positive losses
-  positive_losses <- (l_FNM > 0) & (l_FM1 > 0) & (l_FM2 > 0) & (l_R > 0)
+  C0 <- (l_FNM > 0) & (l_FM1 > 0) & (l_FM2 > 0) & (l_R > 0)
   # - conditions of Theorem 1 of Sadinle (2017)
   C1 <- (l_R == Inf) & (l_FNM <= l_FM1) & (l_FNM + l_FM1 <= l_FM2)
   # - conditions of Theorem 2 of Sadinle (2017)
-  theorem_2 <- ((l_FM2 >= l_FM1) & (l_FM1 >= 2*l_R)) | ((l_FM1 >= l_FNM) & (l_FM2 >= l_FM1 + l_FNM))
+  # C2 <- ((l_FM2 >= l_FM1) & (l_FM1 >= 2*l_R)) | ((l_FM1 >= l_FNM) & (l_FM2 >= l_FM1 + l_FNM))
   # - conditions of Theorem 3 of Sadinle (2017)
   C3 <- (l_FM2 >= l_FM1) & (l_FM1 >= 2*l_R) & (l_FNM >= 2*l_R)
   # check we can handle the specified losses
-  if(!positive_losses) stop("Losses need to be positive")
-  if(!theorem_2) stop("Not yet configured for Sadinle (2017) Theorem 2")
+  if(!C0) stop("Losses need to be positive")
+  if(!(C1 | C3)) stop("Losses must satisfy Theorem 1 or Theorem 3")
 
 
-  # temporarily replace all nonlink labels by n1+1
-  Z_samps[Z_samps > n1+1] <- n1+1
+  if(names(out)[1] == "Z"){
+    Z_samps <- out$Z
+    n2 <- nrow(Z_samps)
+
+    Z_samps[Z_samps > n1+1] <- n1+1
 
     samps <- ncol(Z_samps)
     probs <- apply(Z_samps, 1, function(x){
@@ -40,8 +45,35 @@ estimate_links<- function(Z_samps, n1, l_FNM=1, l_FM1=1, l_FM2=2, l_R=Inf,
       max(x)
     })
     link_indicator <- best_match < n1 + 1
+  }
 
-  if(l_R == Inf){# if not using reject option and conditions of Theorem 1
+  if(names(out)[1] == "pattern_weights"){
+
+    n2 <- hash$n2
+    pattern_probs <- lapply(1:n2, function(j){
+      out$pattern_weights/out$C[j]
+    })
+
+    possible_records <- lapply(1:n2, function(j){
+      record <- c(hash$flags[[j]]$eligible_records, 0)
+      prob <- c(pattern_probs[[j]][hash$flags[[j]]$eligible_patterns],
+                exp(digamma(out$b_pi)) / out$C[j])
+
+      data.frame(record, prob)
+    })
+
+    max_prob <- lapply(possible_records, function(x){
+      x[which.max(x$prob), ]
+    }) %>%
+      do.call(rbind, .)
+
+    best_match <- max_prob$record
+    prob_best_match <- max_prob$prob
+    prob_no_link <- out$b_pi/out$C
+    link_indicator <- best_match > 0
+  }
+
+  if(C1){# if not using reject option and conditions of Theorem 1
 
     if (nonmatch_label == "n_1 + j"){
       Z_hat <- (n1+1):(n1+n2)
@@ -57,26 +89,24 @@ estimate_links<- function(Z_samps, n1, l_FNM=1, l_FM1=1, l_FM2=2, l_R=Inf,
 
   }
 
-  if(l_R < Inf){
-    if(!theorem_2){
+  if(C3){
       Z_hat <- rep(-1, n2) # represents the reject option
       threshold <- 1 - l_R/l_FM1 +
         (l_FM2-l_FM1)*(1 - prob_no_link - prob_best_match) / l_FM1
 
       Z_hat[link_indicator & (prob_best_match > threshold) ] <-
         best_match[link_indicator & (prob_best_match > threshold) ]
-      noLinkDec <- prob_no_link > 1 - l_R / l_FNM
+      nonlink_indicator <- prob_no_link > 1 - l_R / l_FNM
 
       if (nonmatch_label == "n_1 + j"){
-        Z_hat[noLinkDec] <- ((n1+1):(n1+n2))[noLinkDec]
+        Z_hat[nonlink_indicator] <- ((n1+1):(n1+n2))[nonlink_indicator]
       }
       if (nonmatch_label == "zero"){
-        Z_hat[noLinkDec] <- 0
+        Z_hat[nonlink_indicator] <- 0
       }
-    } else {
-    # TODO: Write code for Theorem 2
-    }
   }
+
+    # TODO: Write code for Theorem 2
 
 
   # Enforce one-to-one matching
@@ -84,16 +114,16 @@ estimate_links<- function(Z_samps, n1, l_FNM=1, l_FM1=1, l_FM2=2, l_R=Inf,
     double_matches <- Z_hat[duplicated(Z_hat) & Z_hat > 0]
     if (l_R == Inf){
       to_resolve <- unlist(lapply(double_matches, function(x){
-        dfB_options <- which(Z_hat == x)
-        dfB_probs <- prob_best_match[dfB_options]
-        non_matches <- dfB_options[-which.max(dfB_probs)]
+        df1_options <- which(Z_hat == x)
+        df1_probs <- prob_best_match[df1_options]
+        non_matches <- df1_options[-which.max(df1_probs)]
         non_matches
       }))
       Z_hat[to_resolve] <- 0
     } else {
       to_resolve <- unlist(lapply(double_matches, function(x){
-        dfB_options <- which(Z_hat == x)
-        dfB_options
+        df1_options <- which(Z_hat == x)
+        df1_options
       }))
       Z_hat[to_resolve] <- -1
     }

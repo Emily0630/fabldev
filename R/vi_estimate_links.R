@@ -35,7 +35,7 @@ vi_estimate_links <- function(out, hash, resolve = TRUE,
 
   maxProbOption <- max_prob$record
   probMaxProbOption <- max_prob$prob
-  probNoLink <- out$b_pi/out$C
+  #probNoLink <- out$b_pi/out$C
   maxProbOptionIsLink <- maxProbOption > 0
 
   if(C1){# if not using reject option and conditions of Theorem 1

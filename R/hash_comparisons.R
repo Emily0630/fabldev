@@ -1,12 +1,12 @@
 #' @export
 #'
 hash_comparisons <- function(cd,
-         algorithm = c("vabl", "fabl", "BRL_hash"), R = NULL,
+         algorithm = c("vabl", "fabl", "BRL_hash"), R = 0,
          all_patterns = FALSE, store_pair_to_pattern = TRUE){
 
 
   if("BRL_hash" %in% algorithm){
-    R <- NULL
+    R <- 0
   }
   indicators <- cd[[1]]
   N <- dim(indicators)[1]
@@ -64,11 +64,7 @@ hash_comparisons <- function(cd,
           select(n) %>%
           pull()
         )
-    # select(n) %>%
-    # pull() %>%
-    # matrix(., nrow = P, ncol = n2, byrow = F)
 
-  #total_counts <- rowSums(hash_count_list)
   total_counts <- temp %>%
     group_by(hash_id, .drop = F) %>%
     count() %>%
@@ -101,19 +97,6 @@ hash_comparisons <- function(cd,
 
   hash_to_file_1$N[is.na(hash_to_file_1$N)] <- 0
 
-  # pattern_counts_by_record <- hash_to_file_1 %>%
-  #   select(-data) %>%
-  #   group_split(rec2, .keep = F) %>%
-  #   purrr::map(., `[[`, "N")
-#
-#   record_counts_by_pattern <- NULL
-#
-#   if("vabl" %in% algorithm){
-#   record_counts_by_pattern <- purrr::transpose(pattern_counts_by_record) %>%
-#     purrr::map(unlist) %>%
-#     purrr::map(unname)
-#   }
-
   flags <- NULL
 
   if("vabl" %in% algorithm){
@@ -127,6 +110,8 @@ hash_comparisons <- function(cd,
     group_split(rec2, .keep = F)
   }
 
+
+  # TODO: Try reworking code, conduct SEI with original hash_to_file1 format
   if("fabl" %in% algorithm | "BRL_hash" %in% algorithm){
     hash_to_file_1 <- hash_to_file_1 %>%
       group_split(rec2) %>%
@@ -135,11 +120,28 @@ hash_comparisons <- function(cd,
       purrr::map(., ~purrr::map(.x, `[[`, "data")) %>%
       purrr::map(., ~purrr::map(., ~ unname(unlist(.x))))
 
-    if(!is.null(R)){
+    if(R > 0){
       hash_to_file_1 <- lapply(hash_to_file_1, function(z){
         purrr::map(z, ~sei(.x, R))
       })}
+
+
   }
+
+  # if("fabl" %in% algorithm | "BRL_hash" %in% algorithm){
+  #   thing <- hash_to_file_1 %>%
+  #     group_split(rec2)
+  #   if(R > 0){
+  #     lapply(thing, function(rec){
+  #
+  #     })
+  #     thing <- lapply(hash_to_file_1$data, function(z){
+  #       purrr::map(z, ~sei(.x, R))
+  #     })
+  #   }
+  #
+  #
+  # }
 
   if(!("fabl" %in% algorithm) & !("BRL_hash" %in% algorithm)){
     hash_to_file_1 <- NULL

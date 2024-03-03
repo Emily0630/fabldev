@@ -2,6 +2,6 @@ sei <- function(x, R){
   if(length(x) <= R){
     return(x)
   } else {
-    sample(x, R, replace = FALSE)
+    return(sample(x, R, replace = FALSE))
   }
 }
