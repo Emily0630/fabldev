@@ -22,8 +22,6 @@ estimate_links<- function(out, hash, l_FNM=1, l_FM1=1, l_FM2=2, l_R=Inf,
   if(!C0) stop("Losses need to be positive")
   if(!(C1 | C3)) stop("Losses must satisfy Theorem 1 or Theorem 3")
 
-<<<<<<< HEAD
-=======
   # temporarily replace all nonlink labels by n1+1
   #Z_samps[Z_samps > n1+1] <- n1+1
   if(edition == "old"){
@@ -36,7 +34,6 @@ estimate_links<- function(out, hash, l_FNM=1, l_FM1=1, l_FM2=2, l_R=Inf,
   probMaxProbOption <- apply(tableLabels, 2, max)
   maxProbOptionIsLink <- maxProbOption <= n1
   }
->>>>>>> parent of ee2caab... estimate links function
 
   if(names(out)[1] == "Z"){
     Z_samps <- out$Z
